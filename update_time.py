@@ -1,0 +1,2 @@
+import ntptime
+ntptime.settime()
