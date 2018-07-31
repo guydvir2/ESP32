@@ -22,7 +22,7 @@ class MQTTCom:
         for topic in self.topic1:
             self.client.subscribe(topic)
             print("%s Connected to %s, subscribed to %s" % (self.time_stamp(),
-                                                        self.server, topic))
+                                                            self.server, topic))
 
     def pub(self, msg):
         self.client.publish(self.topic2, "%s Topic: [%s] Message: %s" % (self.time_stamp(),
@@ -113,7 +113,7 @@ pin_button_down = machine.Pin(26, machine.Pin.IN, machine.Pin.PULL_UP)
 SERVER = '192.168.2.113'
 # SERVER = 'iot.eclipse.org'
 CLIENT_ID = 'ESP32'
-TOPIC1 = ['HomePi/Dvir/Windows/ESP32','HomePi/Windows/#']
+TOPIC1 = ['HomePi/Dvir/Windows/ESP32', 'HomePi/Windows/#']
 TOPIC2 = 'HomePi/Dvir/Messages'  # Messages
 
 A = MQTTCom(server=SERVER, client_id=CLIENT_ID, topic1=TOPIC1, topic2=TOPIC2)
