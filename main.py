@@ -5,7 +5,7 @@ def start_wifi():
 def start_clock_update():
     import utime
     # utime.sleep(2)
-    import update_time
+    import update_time_2
     print(utime.localtime())
 
 
@@ -23,5 +23,5 @@ def start_MQTT():
 ###### RUN SERVICES #########
 start_wifi()
 start_clock_update()
-start_ftp()
+# start_ftp()
 start_MQTT()

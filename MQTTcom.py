@@ -173,8 +173,8 @@ def button_switch():
 
 
 # ################ Def GPIOs #########################################
-pin_up = machine.Pin(14, machine.Pin.OUT, value=1)  # value=1 actually is 0
-pin_down = machine.Pin(12, machine.Pin.OUT, value=1)
+pin_up = machine.Pin(14, machine.Pin.OUT, machine.Pin.PULL_UP, value=1)  # value=1 actually is 0
+pin_down = machine.Pin(12, machine.Pin.OUT, machine.Pin.PULL_UP, value=1)
 pin_button_up = machine.Pin(27, machine.Pin.IN, machine.Pin.PULL_UP)
 pin_button_down = machine.Pin(26, machine.Pin.IN, machine.Pin.PULL_UP)
 ######################################################################
@@ -182,8 +182,8 @@ pin_button_down = machine.Pin(26, machine.Pin.IN, machine.Pin.PULL_UP)
 # ############### Def MQTT Communicator ##############################
 SERVER = '192.168.2.113'
 # SERVER = 'iot.eclipse.org'
-CLIENT_ID = 'ESP32'
-TOPIC1 = ['HomePi/Dvir/Windows/ESP32', 'HomePi/Dvir/Windows/All']
+CLIENT_ID = 'ESP32_3'
+TOPIC1 = ['HomePi/Dvir/Windows/ESP8266_1', 'HomePi/Dvir/Windows/All']
 TOPIC2 = 'HomePi/Dvir/Messages'  # Messages Topic
 t_SW = 0.1
 
