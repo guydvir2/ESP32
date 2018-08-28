@@ -1,5 +1,3 @@
-from umqtt.simple import MQTTClient
-import _thread
 import utime
 import machine
 
@@ -95,13 +93,6 @@ def rel_down_state():
         return 1
 
 
-def flicker():
-    for i in range(10):
-        switch_up()
-        utime.sleep(t_SW)
-        switch_down()
-        utime.sleep(t_SW)
-
 
 def PBit():
     print("PowerOnBit started")
@@ -112,90 +103,56 @@ def PBit():
     switch_off()
 
 
-def emergnecy():
-    import os
-    import machine
-    os.rename('MQTTcom.py', 'MQTTcom_old.py')
-    machine.reset()
-
-
-def mqtt_commands(msg):
-    msgs = ['reset', 'up', 'down', 'status', 'off', 'info']
-    if msg == msgs[0]:
-        A.pub("[Reset CMD]")
-        emergnecy()
-    elif msg.lower() == msgs[1]:
-        switch_up()
-        A.pub("Switch CMD: [UP]")
-    elif msg.lower() == msgs[2]:
-        switch_down()
-        A.pub("Switch CMD: [DOWN]")
-    elif msg.lower() == msgs[3]:
-        A.pub("Status CMD: Button_UP:[%s], Relay_UP:[%s], Button_Down:[%s], Relay_Down:[%s]" % (
-            but_up_state(), rel_up_state(), but_down_state(), rel_down_state()))
-    elif msg.lower() == msgs[4]:
-        switch_off()
-        A.pub("OFF")
-    elif msg.lower() == msgs[5]:
-        A.pub([msg1 for msg1 in msgs])
-
 
 def button_switch():
     # physical button switch
     last_state_register = [but_up_state(), but_down_state()]
+    PBit()
+
     while True:
         if last_state_register != [but_up_state(), but_down_state()]:
-            # switch_up.
+
+            # switch up
             if but_up_state() == 1 and rel_up_state() == 0:
                 switch_up()
-                try:
-                    A.pub("Button Switch: [UP]")
-                except NameError:
-                    print("UP")
+                # try:
+                #     A.pub("Button Switch: [UP]")
+                # except NameError:
+                #     print("UP")
+
             # switch down
             elif but_down_state() == 1 and rel_down_state() == 0:
                 switch_down()
-                try:
-                    A.pub("Button Switch: [DOWN]")
-                except NameError:
-                    print("DOWN")
+                # try:
+                #     A.pub("Button Switch: [DOWN]")
+                # except NameError:
+                #     print("DOWN")
 
             elif but_down_state() == 0 and but_down_state() == 0:  # and (rel_down_state() == 1 or rel_up_state() == 1):
                 switch_off()
-                try:
-                    A.pub("Button Switch: [OFF]")
-                except NameError:
-                    print("OFF")
+                # try:
+                #     A.pub("Button Switch: [OFF]")
+                # except NameError:
+                #     print("OFF")
             last_state_register = [but_up_state(), but_down_state()]
             # print("end loop")
 
         utime.sleep(t_SW)
 
 
-# ################ Def GPIOs #########################################
+# # ################ Def GPIOs ESP8266 #########################################
+# pin_up = machine.Pin(12, machine.Pin.OUT, machine.Pin.PULL_UP, value=1)  # value=1 actually is 0
+# pin_down = machine.Pin(14, machine.Pin.OUT, machine.Pin.PULL_UP, value=1)
+# pin_button_up = machine.Pin(4, machine.Pin.IN, machine.Pin.PULL_UP)
+# pin_button_down = machine.Pin(5, machine.Pin.IN, machine.Pin.PULL_UP)
+# t_SW = 0.1
+# ######################################################################
+
+# ################ Def GPIOs ESP32 #########################################
 pin_up = machine.Pin(22, machine.Pin.OUT, machine.Pin.PULL_UP, value=1)  # value=1 actually is 0
 pin_down = machine.Pin(19, machine.Pin.OUT, machine.Pin.PULL_UP, value=1)
 pin_button_up = machine.Pin(25, machine.Pin.IN, machine.Pin.PULL_UP)
 pin_button_down = machine.Pin(26, machine.Pin.IN, machine.Pin.PULL_UP)
-######################################################################
-
-# ############### Def MQTT Communicator ##############################
-SERVER = '192.168.2.113'
-# SERVER = 'iot.eclipse.org'
-CLIENT_ID = 'ESP32_NEW'
-TOPIC1 = ['HomePi/Dvir/Windows/ESP32_NEW', 'HomePi/Dvir/Windows/All']
-TOPIC2 = 'HomePi/Dvir/Messages'  # Messages Topic
 t_SW = 0.1
-
-A = MQTTCom(server=SERVER, client_id=CLIENT_ID, topic1=TOPIC1, topic2=TOPIC2)
-utime.sleep(1)
-A.pub('System Boot')
-A.link2commands = lambda: mqtt_commands(A.arrived_msg)
-####################################################################
-
-
-# Program Executes HERE
-###########################################
-_thread.start_new_thread(A.wait_for_msg, ())
-_thread.start_new_thread(button_switch, ())
-PBit()
+######################################################################
+button_switch()
