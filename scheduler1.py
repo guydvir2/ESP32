@@ -3,15 +3,14 @@ import _thread
 
 
 class uScheduler():
-    def __init__(self):#, task_dict=None):
+    def __init__(self):  # , task_dict=None):
         self.weekly_sched = []
         self.utc = 3
-
 
     def get_task(self, task_time):
         if task_time is None:
             task_time = {'start_days': [3, 4], 'start_time': '19:00:00', 'end_days': [2, 5], 'end_time': '23:59:00'}
-        m = len(self.weekly_sched)+1 #task_time['start_days'])
+        m = len(self.weekly_sched) + 1  # task_time['start_days'])
 
         for i in range(len(task_time['start_days'])):
             temp = task_time.copy()
@@ -27,7 +26,7 @@ class uScheduler():
             self.weekly_sched.append(temp)
 
     def start(self):
-        _thread.start_new_thread(self.run_schedule,())
+        _thread.start_new_thread(self.run_schedule, ())
 
     @staticmethod
     def add_time(time, years=0, days=0, hours=0, minutes=0, seconds=0):
@@ -127,7 +126,7 @@ class uScheduler():
         return time_tuple
 
     @staticmethod
-    def timetuple2clock( time_tuple):
+    def timetuple2clock(time_tuple):
         if time_tuple[0] > 0:
             time_str = '%d days %02d:%02d:%02d' % (time_tuple[0], time_tuple[1], time_tuple[2], time_tuple[3])
         else:
@@ -175,15 +174,18 @@ class uScheduler():
     def switch_off(self):
         pass
 
+
 def on_command():
     print("ON")
+
 
 def off_command():
     print("OFF")
 
+
 b = uScheduler()
 # b.get_task({'start_days': [3, 4, 7], 'start_time': '19:00:00', 'end_days': [2, 5, 7], 'end_time': '23:59:00'})
 b.get_task({'start_days': [3], 'start_time': '00:00:00', 'end_days': [3], 'end_time': '05:48:30'})
-b.switch_on = lambda :on_command()
-b.switch_off = lambda :off_command()
+b.switch_on = lambda: on_command()
+b.switch_off = lambda: off_command()
 b.start()
