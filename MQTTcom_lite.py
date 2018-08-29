@@ -155,9 +155,10 @@ class MQTTCom:
 # ############### Def MQTT Communicator ##############################
 SERVER = '192.168.2.113'
 # SERVER = 'iot.eclipse.org'
-CLIENT_ID = 'ESP8266_1'
-TOPIC_LISTEN = ['HomePi/Dvir/Windows/ESP8266_1', 'HomePi/Dvir/Windows/All']
+CLIENT_ID = 'ESP32_2'
+TOPIC_LISTEN = ['HomePi/Dvir/Windows/pRoomWindow', 'HomePi/Dvir/Windows/All']
 TOPIC_OUT = 'HomePi/Dvir/Messages'  # Messages Topic
 
-A = MQTTCom(server=SERVER, client_id=CLIENT_ID, topic1=TOPIC_LISTEN, topic2=TOPIC_OUT)
+A = MQTTCom(server=SERVER, client_id=CLIENT_ID, topic1=TOPIC_LISTEN, topic2=TOPIC_OUT, pin_in1=27, pin_in2=14,
+            pin_out1=25, pin_out2=26)
 ####################################################################
