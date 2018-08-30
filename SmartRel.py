@@ -76,10 +76,11 @@ class MQTTCommander:
                 try:
                     self.client.check_msg()
                 except OSError:
-                    # Reconnect MQTT client
-                    if wifi.is_connected() == 0:
+                    # Reconnect Wifi
+                    if wifi.is_connected() != 0:
                         print("Try reconnect wifi")
                         wifi.connect()
+                    # Reconnect MQTT client
                     self.start_client()
                     utime.sleep(3)
                     print("Not connected to MQTT server- trying to re-establish connection")
@@ -188,31 +189,47 @@ class DualRelaySwitcher(MQTTCommander):
 
 class Connect2Wifi:
 
-    def __init__(self):
+    def __init__(self, ip=None):
         self.sta_if = network.WLAN(network.STA_IF)
-        self.connect()
+        self.sta_if.active(True)
+        self.connect(ip)
 
     def is_connected(self):
         return self.sta_if.isconnected()
 
-    def connect(self):
+    def connect(self, ip=None):
         if not self.sta_if.isconnected():
             print('connecting to network...')
-            self.sta_if.active(True)
             self.sta_if.connect("HomeNetwork_2.4G", "guyd5161")
+            # assign staticIP
+            if ip is not None:
+                self.sta_if.ifconfig((ip, "255.255.255.0", "192.168.2.1", "192.168.2.1"))  # static IP
             while not self.sta_if.isconnected():
                 pass
         print('network config:', self.sta_if.ifconfig())
 
 
-# ############### Def MQTT Communicator #####################################################################
-SERVER = '192.168.2.113'
-# SERVER = 'iot.eclipse.org'
+# ############### CHANGE values each PORT  ##################################
 CLIENT_ID = 'ESP8266_1'
-TOPIC_LISTEN = ['HomePi/Dvir/Windows/esp8266_1', 'HomePi/Dvir/Windows/All']
-TOPIC_OUT = 'HomePi/Dvir/Messages'  # Messages Topic
+client_topic = 'HomePi/Dvir/Windows/esp8266_1'
 
-wifi = Connect2Wifi()
-SmartRelay = DualRelaySwitcher(pin_in1=4, pin_in2=5, pin_out1=14, pin_out2=12,
+# ESP8266 pins
+pin_in1 = 4
+pin_in2 = 5
+pin_out1 = 14
+pin_out2 = 12
+#
+
+static_ip = '192.168.2.160'
+# static_ip = None  ## Optional ##
+# #############################################################################
+
+# ############################## Leave AS IS ##################################
+SERVER = '192.168.2.113'
+# SERVER = 'iot.eclipse.org' ## Optional ##
+TOPIC_LISTEN = [client_topic, 'HomePi/Dvir/Windows/All']
+TOPIC_OUT = 'HomePi/Dvir/Messages'  # Messages Topic
+wifi = Connect2Wifi(static_ip)
+SmartRelay = DualRelaySwitcher(pin_in1=pin_in1, pin_in2=pin_in2, pin_out1=pin_out1, pin_out2=pin_out2,
                                server=SERVER, client_id=CLIENT_ID, topic1=TOPIC_LISTEN, topic2=TOPIC_OUT)
-#############################################################################################################
+# ##############################################################################
