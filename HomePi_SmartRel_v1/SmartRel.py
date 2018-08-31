@@ -3,6 +3,7 @@ import utime
 import machine
 import network
 import ntptime
+import jReader
 
 
 class Connect2Wifi:
@@ -15,14 +16,17 @@ class Connect2Wifi:
         return self.sta_if.isconnected()
 
     def connect(self, ip=None):
-        if not self.sta_if.isconnected():
+        # if not self.sta_if.isconnected():
+        while not self.sta_if.isconnected():
+
             print('connecting to network...')
             self.sta_if.connect("HomeNetwork_2.4G", "guyd5161")
             # assign staticIP
             if ip is not None:
                 self.sta_if.ifconfig((ip, "255.255.255.0", "192.168.2.1", "192.168.2.1"))  # static IP
-            while not self.sta_if.isconnected():
-                pass
+            # while not self.sta_if.isconnected():
+            #     pass
+            utime.sleep(2)
         print('network config:', self.sta_if.ifconfig())
 
 
@@ -88,6 +92,7 @@ class MQTTCommander(Connect2Wifi):
     def wait_for_msg(self):
         try:
             last_state_register = [self.but_up_state(), self.but_down_state()]
+
             while True:
                 # This part belongs define input ( button ) behaviour
                 nowState = [self.but_up_state(), self.but_down_state()]
@@ -113,7 +118,8 @@ class MQTTCommander(Connect2Wifi):
                     print("Not connected to MQTT server- trying to re-establish connection")
 
                 utime.sleep(self.t_SW)
-                self.clock.check_update()
+                if self.clock.check_update() == 1:
+                    self.pub("Clock update successfully")
         finally:
             try:
                 self.client.disconnect()
@@ -251,40 +257,19 @@ class ClockUpdate:
         if utime.ticks_diff(self.future_clock_update, utime.ticks_ms()) < 0:
             self.update()
             self.create_new_update_time()
+            return 1
+        else:
+            return 0
 
     def create_new_update_time(self):
         update_int = self.update_int * 60 * 60 * 1000  # result in milli-seconds
-        self.future_clock_update = utime.ticks_add(utime.ticks_ms(), update_int)
+        self.future_clock_update = utime.ticks_add(utime.ticks_ms(), int(update_int))
 
 
-# ############### CHANGE values each PORT  ##################################
-CLIENT_ID = 'ESP32_1'
-client_topic = 'HomePi/Dvir/Windows/fRoomWindow'
-
-# # ESP8266 pins
-# pin_in1 = 4
-# pin_in2 = 5
-# pin_out1 = 14
-# pin_out2 = 12
-# #
-
-# ESP32 pins
-pin_in1 = 22
-pin_in2 = 19
-pin_out1 = 23
-pin_out2 = 18
-#
-static_ip = '192.168.2.201'
-# static_ip = None  ## Optional ##
-# #############################################################################
-
-# ############################## Leave AS IS ##################################
-SERVER = '192.168.2.113'
-# SERVER = 'iot.eclipse.org' ## Optional ##
-TOPIC_LISTEN = [client_topic, 'HomePi/Dvir/Windows/All']
-TOPIC_OUT = 'HomePi/Dvir/Messages'  # Messages Topic
-# wifi = Connect2Wifi(static_ip)
-SmartRelay = DualRelaySwitcher(pin_in1=pin_in1, pin_in2=pin_in2, pin_out1=pin_out1, pin_out2=pin_out2,
-                               server=SERVER, client_id=CLIENT_ID, topic1=TOPIC_LISTEN, topic2=TOPIC_OUT,
-                               static_ip=static_ip)
-# ##############################################################################
+config_file = jReader.JSONconfig('config.json')
+con_data = config_file.data_from_file
+SmartRelay = DualRelaySwitcher(pin_in1=con_data["pin_in1"], pin_in2=con_data["pin_in2"], pin_out1=con_data["pin_out1"],
+                               pin_out2=con_data["pin_out2"], server=con_data["server"],
+                               client_id=con_data["client_ID"], topic1=con_data["listen_topics"],
+                               topic2=con_data["out_topic"],
+                               static_ip=con_data["static_ip"])
