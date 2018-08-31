@@ -23,7 +23,7 @@ class JSONconfig:
                            "pin_in1": 22, "pin_in2": 19, "pin_out1": 23, "pin_out2": 18,
                            "static_ip": None,
                            "server": '192.168.2.113'}
-        self.def_values["listen_topics"] = ['HomePi/Dvir/Windows/All', self.def_values["client_topic"]]
+        self.def_values["listen_topics"] = [self.def_values["client_topic"],'HomePi/Dvir/Windows/All']
 
     def create_default_file(self):
         self.create_def_vals()
