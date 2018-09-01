@@ -1,140 +1,67 @@
-from umqtt.simple import MQTTClient
+from wifi_tools import *
 import utime
 import machine
-import network
-import ntptime
 import jReader
+import os
 
 
-class Connect2Wifi:
-    def __init__(self, ip=None):
-        self.sta_if = network.WLAN(network.STA_IF)
-        self.sta_if.active(True)
-        self.connect(ip)
+class ErrorLog:
+    def __init__(self, log_filename=None, time_stamp=1, screen_output=1):
 
-    def is_connected(self):
-        return self.sta_if.isconnected()
+        self.time_stamp_in_log = time_stamp
+        self.valid_logfile = False
+        self.output2screen = screen_output
 
-    def connect(self, ip=None):
-        # if not self.sta_if.isconnected():
-        while not self.sta_if.isconnected():
+        if log_filename is None:
+            self.err_log = os.getcwd() + 'HPi_err.log'
+        else:
+            self.err_log = log_filename
 
-            print('connecting to network...')
-            self.sta_if.connect("HomeNetwork_2.4G", "guyd5161")
-            # assign staticIP
-            if ip is not None:
-                self.sta_if.ifconfig((ip, "255.255.255.0", "192.168.2.1", "192.168.2.1"))  # static IP
-            # while not self.sta_if.isconnected():
-            #     pass
-            utime.sleep(2)
-        print('network config:', self.sta_if.ifconfig())
+        self.check_logfile_valid()
 
+    def check_logfile_valid(self):
+        # verify existance of log file
+        if self.err_log in os.listdir():
+            self.valid_logfile = True
+        # create new file
+        else:
+            open(self.err_log, 'a').close()
 
-class MQTTCommander(Connect2Wifi):
-    def __init__(self, server, client_id, topic1, topic2=None, static_ip=''):
-        self.server = server
-        self.client_id = client_id
-        self.topic1, self.topic2 = topic1, topic2
-        self.client, self.arrived_msg = None, None
+            if self.err_log in os.listdir():
+                self.valid_logfile = True
 
-        Connect2Wifi.__init__(self, static_ip)
+            if self.valid_logfile is True:
+                msg = '>>Log file %s was created successfully' % self.err_log
+            else:
+                msg = '>>Log file %s failed to create' % self.err_log
 
-        # update clock for drifts
-        self.clock = ClockUpdate(utc_shift=3, update_int=24)
+            self.append_log(msg, time_stamp=1)
 
-        self.start_client()
-        utime.sleep(1)
+    def append_log(self, log_entry='', time_stamp=None):
+        # permanent time_stamp
+        if time_stamp is None:
+            if self.time_stamp_in_log == 1:
+                self.msg = '%s %s' % (self.time_stamp(), log_entry)
+            else:
+                self.msg = '%s' % log_entry
+        # ADHOC time_stamp - over-rides permanent one
+        elif time_stamp is 1:
+            self.msg = '%s %s' % (self.time_stamp(), log_entry)
+        elif time_stamp is 0:
+            self.msg = '%s' % log_entry
 
-        self.pub('System Boot')
-        self.wait_for_msg()
+        if self.valid_logfile is True:
+            myfile = open(self.err_log, 'a')
+            myfile.write(self.msg + '\n')
+            myfile.close()
+        else:
+            print('Log err')
 
-    def start_client(self):
-        self.client = MQTTClient(self.client_id, self.server, 0)
-        self.client.set_callback(self.on_message)
-        try:
-            self.client.connect()
-            for topic in self.topic1:
-                self.client.subscribe(topic)
-        except OSError:
-            print("Error connecting MQTT broker")
-
-    def pub(self, msg):
-        try:
-            self.client.publish(self.topic2, "%s Topic: [%s] Message: %s" % (self.time_stamp(),
-                                                                             self.topic1[0], msg))
-        except OSError:
-            print("Not connected to MQTT server")
-
-    def on_message(self, topic, msg):
-        def mqtt_commands(msg):
-            msgs = ['reset', 'up', 'down', 'status', 'off', 'info']
-            if msg == msgs[0]:
-                self.pub("[Reset CMD]")
-                # emergnecy()
-            elif msg.lower() == msgs[1]:
-                self.switch_up()
-                self.pub("Switch CMD: [UP]")
-            elif msg.lower() == msgs[2]:
-                self.switch_down()
-                self.pub("Switch CMD: [DOWN]")
-            elif msg.lower() == msgs[3]:
-                self.pub("Status CMD: Button_UP:[%s], Relay_UP:[%s], Button_Down:[%s], Relay_Down:[%s]" % (
-                    self.but_up_state(), self.rel_up_state(), self.but_down_state(), self.rel_down_state()))
-            elif msg.lower() == msgs[4]:
-                self.switch_off()
-                self.pub("OFF")
-            elif msg.lower() == msgs[5]:
-                self.pub([msg1 for msg1 in msgs])
-
-        self.arrived_msg = msg.decode("UTF-8").strip()
-        mqtt_commands(msg=self.arrived_msg)
-
-    def wait_for_msg(self):
-        try:
-            last_state_register = [self.but_up_state(), self.but_down_state()]
-
-            while True:
-                # This part belongs define input ( button ) behaviour
-                nowState = [self.but_up_state(), self.but_down_state()]
-                if last_state_register != nowState:
-                    # debounce
-                    utime.sleep(self.t_SW)
-                    if last_state_register != nowState:
-                        print(nowState)
-                        self.button_switch()
-                        last_state_register = [self.but_up_state(), self.but_down_state()]
-
-                # This is listening for MQTT commands
-                try:
-                    self.client.check_msg()
-                except OSError:
-                    # Reconnect Wifi
-                    if self.is_connected() != 0:
-                        print("Try reconnect wifi")
-                        self.connect()
-                    # Reconnect MQTT client
-                    self.start_client()
-                    utime.sleep(3)
-                    print("Not connected to MQTT server- trying to re-establish connection")
-
-                utime.sleep(self.t_SW)
-                if self.clock.check_update() == 1:
-                    self.pub("Clock update successfully")
-        finally:
-            try:
-                self.client.disconnect()
-            except OSError:
-                print("Not connected to MQTT server")
-
-    @staticmethod
-    def time_stamp():
-        t_tup = utime.localtime()
-        t = "[%d-%02d-%02d %02d:%02d:%02d.%02d]" % (t_tup[0], t_tup[1], t_tup[2],
-                                                    t_tup[3], t_tup[4], t_tup[5], t_tup[6])
-        return t
+        if self.output2screen == 1:
+            print(self.msg)
 
 
-class DualRelaySwitcher(MQTTCommander):
+class DualRelaySwitcher(MQTTCommander, ErrorLog):
     def __init__(self, pin_in1=4, pin_in2=5, pin_out1=14, pin_out2=12,
                  server=None, client_id=None, topic1=None, topic2=None,
                  static_ip=''):
@@ -148,10 +75,16 @@ class DualRelaySwitcher(MQTTCommander):
         self.t_SW = 0.1
         self.PBit()
 
+        ErrorLog.__init__(self, log_filename='error.log')
+        self.append_log("Boot")  # ,%s, %s" % (server, topic1))
+
         # Class can be activated without MQTTcommander
         if server is not None and client_id is not None and topic1 is not None:
             MQTTCommander.__init__(self, server, client_id, topic1, topic2, static_ip)
         utime.sleep(2)
+
+    #     CODE DOES NOT CONTINUE FROM DOWN HERE (LOOP IS IN MQTTCommader)
+
 
     # Define Relay states as Up, Down and Off
     def switch_up(self):
@@ -207,6 +140,7 @@ class DualRelaySwitcher(MQTTCommander):
                 self.pub("Button Switch: [UP]")
             except NameError:
                 print("UP")
+                self.append_log("fail to publish to broker")
         # switch down
         elif self.but_down_state() == 1 and self.rel_down_state() == 0:
             self.switch_down()
@@ -214,6 +148,8 @@ class DualRelaySwitcher(MQTTCommander):
                 self.pub("Button Switch: [DOWN]")
             except NameError:
                 print("DOWN")
+                self.append_log("fail to publish to broker")
+
         # switch off
         elif self.but_down_state() == 0 and self.but_down_state() == 0:
             self.switch_off()
@@ -221,6 +157,7 @@ class DualRelaySwitcher(MQTTCommander):
                 self.pub("Button Switch: [OFF]")
             except NameError:
                 print("OFF")
+                self.append_log("fail to publish to broker")
 
     def PBit(self):
         print("PowerOnBit started")
@@ -231,43 +168,9 @@ class DualRelaySwitcher(MQTTCommander):
         self.switch_off()
 
 
-class ClockUpdate:
-    def __init__(self, utc_shift=0, update_int=24):
-        self.utc_shift = utc_shift
-        self.update_int = update_int
-        self.future_clock_update = None
-
-        self.create_new_update_time()
-        self.update()
-
-    def update(self):
-        try:
-            ntptime.settime()
-            rtc = machine.RTC()
-
-            tm = utime.localtime(utime.mktime(utime.localtime()) + self.utc_shift * 3600)
-            tm = tm[0:3] + (0,) + tm[3:6] + (0,)
-            rtc.datetime(tm)
-            print("clock update successful", utime.localtime())
-        except OSError:
-            print("fail getting NTP server")
-            # return "clock update failed"
-
-    def check_update(self):
-        if utime.ticks_diff(self.future_clock_update, utime.ticks_ms()) < 0:
-            self.update()
-            self.create_new_update_time()
-            return 1
-        else:
-            return 0
-
-    def create_new_update_time(self):
-        update_int = self.update_int * 60 * 60 * 1000  # result in milli-seconds
-        self.future_clock_update = utime.ticks_add(utime.ticks_ms(), int(update_int))
-
-
 config_file = jReader.JSONconfig('config.json')
 con_data = config_file.data_from_file
+
 SmartRelay = DualRelaySwitcher(pin_in1=con_data["pin_in1"], pin_in2=con_data["pin_in2"], pin_out1=con_data["pin_out1"],
                                pin_out2=con_data["pin_out2"], server=con_data["server"],
                                client_id=con_data["client_ID"], topic1=con_data["listen_topics"],
