@@ -1,11 +1,49 @@
 from wifi_tools import *
 import utime
 import machine
-import jReader
+import json
 import os
 
 
+class JSONconfig:
+    def __init__(self, filename):
+        self.filename = filename
+        self.def_values = {}
+        self.data_from_file = None
+        self.read_file()
+
+    def read_file(self):
+        if self.filename in os.listdir():
+            with open(self.filename, 'r') as f:
+                self.data_from_file = json.load(f)
+        else:
+            self.create_default_file()
+
+    def create_def_vals(self):
+        self.def_values = {"client_ID": 'ESP32_1',
+                           "client_topic": 'HomePi/Dvir/my_device',
+                           "out_topic": 'HomePi/Dvir/Messages',
+                           "pin_in1": 22, "pin_in2": 19, "pin_out1": 23, "pin_out2": 18,
+                           "static_ip": None,
+                           "server": '192.168.2.113'}
+        self.def_values["listen_topics"] = [self.def_values["client_topic"], 'HomePi/Dvir/Windows/All']
+
+    def create_default_file(self):
+        self.create_def_vals()
+        self.write2file(self.def_values)
+
+    def write2file(self, dict):
+        with open(self.filename, 'w') as f:
+            json.dump(dict, f)
+
+    def update_value(self, key, value):
+        self.read_file()
+        self.data_from_file[key] = value
+        self.write2file(self.data_from_file)
+
+
 class ErrorLog:
+    # log saved on ESP as a file
     def __init__(self, log_filename=None, time_stamp=1, screen_output=1):
 
         self.time_stamp_in_log = time_stamp
@@ -62,6 +100,13 @@ class ErrorLog:
 
 
 class DualRelaySwitcher(MQTTCommander, ErrorLog):
+    # This class defines the physical HW of GPIO on port
+    # it calls 2 other classes: MQTTcommander - to enable remote commands ( send & receive )
+    # and ErrorLog- that saves a local log for errors only.
+    # MQTTCommander is incharge of : 1) MQTT, 2) calling an reconnecting wifi 3) clock updates
+    # for some reason - a malfunction in wifi or broker connectivity - a local button switch remain operational
+    # but with a 1 second delay - to enable wifi and broker to regain connection
+
     def __init__(self, pin_in1=4, pin_in2=5, pin_out1=14, pin_out2=12,
                  server=None, client_id=None, topic1=None, topic2=None,
                  static_ip=''):
@@ -76,7 +121,6 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
         self.PBit()
 
         ErrorLog.__init__(self, log_filename='error.log')
-        self.append_log("Boot")  # ,%s, %s" % (server, topic1))
 
         # Class can be activated without MQTTcommander
         if server is not None and client_id is not None and topic1 is not None:
@@ -84,7 +128,6 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
         utime.sleep(2)
 
     #     CODE DOES NOT CONTINUE FROM DOWN HERE (LOOP IS IN MQTTCommader)
-
 
     # Define Relay states as Up, Down and Off
     def switch_up(self):
@@ -168,7 +211,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
         self.switch_off()
 
 
-config_file = jReader.JSONconfig('config.json')
+config_file = JSONconfig('config.json')
 con_data = config_file.data_from_file
 
 SmartRelay = DualRelaySwitcher(pin_in1=con_data["pin_in1"], pin_in2=con_data["pin_in2"], pin_out1=con_data["pin_out1"],

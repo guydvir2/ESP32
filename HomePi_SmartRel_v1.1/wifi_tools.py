@@ -5,7 +5,6 @@ import ntptime
 import machine
 
 
-
 class Connect2Wifi:
     def __init__(self, ip=None):
         self.sta_if = network.WLAN(network.STA_IF)
@@ -17,7 +16,7 @@ class Connect2Wifi:
 
     def connect(self, ip=None):
         if not self.sta_if.isconnected():
-        # while not self.sta_if.isconnected():
+            # while not self.sta_if.isconnected():
             print('connecting to network...')
             self.sta_if.connect("HomeNetwork_2.4G", "guyd5161")
 
@@ -45,13 +44,15 @@ class MQTTCommander(Connect2Wifi):
 
         self.startMQTTclient()
         utime.sleep(1)
+        # self÷.watchDog = machine.WDT(timeout=10)
 
-        self.pub('Boot- server: %s, ip: %s' %(server, self.sta_if.ifconfig()[0]))
+        self.pub('Boot- server: %s, ip: %s' % (server, self.sta_if.ifconfig()[0]))
         self.wait_for_msg()
 
     def startMQTTclient(self):
-        self.client = MQTTClient(self.client_id, self.server, self.qos)
+        self.client = MQTTClient(self.client_id, self.server, self.qos, lw_topic=self.topic2, lw_msg='went off-line')
         self.client.set_callback(self.on_message)
+        self.client.DEBUG = True
         try:
             self.client.connect()
             for topic in self.topic1:
@@ -93,6 +94,7 @@ class MQTTCommander(Connect2Wifi):
         mqtt_commands(msg=self.arrived_msg)
 
     def wait_for_msg(self):
+        counter = 0
         try:
             last_buttons_state = [self.but_up_state(), self.but_down_state()]
 
@@ -109,20 +111,42 @@ class MQTTCommander(Connect2Wifi):
                 # This is listening for MQTT commands
                 try:
                     self.client.check_msg()
+
+                    # returning from disconnection to broker/ wifi
+                    if counter > 0:
+                        self.append_log("Reconnect to Broker after %d tries" % counter)
+                        counter = 0
+
                 except OSError:
-                    self.append_log("fail to access broker for messages")
+                    counter += 1
+
+                    # After so,e retires- maybe reset is a better solution
+                    if counter > 10:
+                        quit()
+
+                    msg_0 = "fail to access broker for messages #%d" % counter
+                    print(msg_0)
+                    self.append_log(msg_0)
                     # Reconnect Wifi
-                    if self.is_connected() != 0:
-                        print("Try reconnect wifi")
+                    if self.is_connected() == 0:
+                        msg_1 = "Try reconnect wifi #%d" % counter
+                        print(msg_1)
+                        self.append_log(msg_1)
                         self.connect()
-                    # Reconnect MQTT client
-                    self.startMQTTclient()
-                    utime.sleep(3)
-                    print("Not connected to MQTT server- trying to re-establish connection")
+                    else:
+                        # Reconnect MQTT client
+                        msg_2 = "Try reconnect broker: %s  #%d" % (self.server, counter)
+                        print(msg_2)
+                        self.append_log(msg_2)
+                        self.startMQTTclient()
+                        utime.sleep(3)
+
+                # clock sync
+                if self.clock.check_update() == 1:
+                    self.pub("Clock update successfully")
 
                 utime.sleep(self.t_SW)
-                # if self.clock.check_update() == 1:
-                #     self.pub("Clock update successfully")
+
         finally:
             try:
                 self.client.disconnect()
