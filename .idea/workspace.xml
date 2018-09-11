@@ -2,12 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6c20b514-8721-4bf8-8203-a70491553d29" name="Default Changelist" comment="from pycharm, renaming file and deleting">
-      <change beforePath="$PROJECT_DIR$/.idea/ESP32.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ESP32.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/HomePi_SmartRel_v1.3/config.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/HomePi_SmartRel_v1.3/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/HomePi_SmartRel_v1.3/wifi_tools.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/HomePi_SmartRel_v1/SmartRel.py" beforeDir="false" afterPath="$PROJECT_DIR$/HomePi_SmartRel_v1.1/SmartRel.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/HomePi_SmartRel_v1/jReader.py" beforeDir="false" afterPath="$PROJECT_DIR$/jReader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/HomePi_SmartRel_v1/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/HomePi_SmartRel_v1.1/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/HomePi_SmartRel_v1/wifi_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/HomePi_SmartRel_v1.1/wifi_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HomePi_SmartRel_v1.1/SmartRel.py" beforeDir="false" afterPath="$PROJECT_DIR$/HomePi_SmartRel_v1.3/SmartRel.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/HomePi_SmartRel_v1.1/config.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/HomePi_SmartRel_v1.1/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/HomePi_SmartRel_v1.1/wifi_tools.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jReader.py" beforeDir="false" afterPath="$PROJECT_DIR$/HomePi_SmartRel_v1.3/jReader.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -89,33 +92,103 @@
         </counts>
       </usages-collector>
     </session>
+    <session id="-1703922038">
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="json" value="3" />
+          <entry key="py" value="4" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="JSON" value="3" />
+          <entry key="Python" value="4" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="Python Console" value="49" />
+          <entry key="json" value="76" />
+          <entry key="py" value="3069" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="JSON" value="76" />
+          <entry key="Python" value="3118" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="2" />
+          <entry key="project.open.time.4" value="1" />
+          <entry key="project.open.time.7" value="1" />
+          <entry key="project.opened" value="2" />
+        </counts>
+      </usages-collector>
+    </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.1/main.py">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.3/main.py">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.3/SmartRel.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="12" lean-forward="true" selection-start-line="12" selection-end-line="12" />
+            <state relative-caret-position="915">
+              <caret line="61" lean-forward="true" selection-start-line="61" selection-end-line="61" />
               <folding>
-                <element signature="e#82#97#0" expanded="true" />
+                <element signature="e#0#24#0" expanded="true" />
+                <element signature="e#3537#3619#0" />
+                <element signature="e#3656#3738#0" />
+                <element signature="e#3774#3856#0" />
+                <element signature="e#3941#4091#0" />
+                <element signature="e#4129#4275#0" />
+                <element signature="e#4313#4440#0" />
+                <element signature="e#4480#4611#0" />
+                <element signature="e#4696#5610#0" />
+                <element signature="e#5640#5815#0" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.1/wifi_tools.py">
+        <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.3/config.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
-              <caret line="31" column="34" selection-start-line="31" selection-start-column="34" selection-end-line="31" selection-end-column="34" />
+            <state relative-caret-position="60">
+              <caret line="4" selection-start-line="4" selection-end-line="4" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.3/wifi_tools.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1215">
+              <caret line="159" column="28" lean-forward="true" selection-start-line="159" selection-start-column="28" selection-end-line="159" selection-end-column="28" />
               <folding>
                 <element signature="e#0#35#0" expanded="true" />
-                <element signature="e#120#882#0" />
-                <element signature="e#369#882#0" />
-                <element signature="e#924#6051#0" />
-                <element signature="e#6077#7187#0" />
+                <element signature="e#120#831#0" />
+                <element signature="e#857#1968#0" />
+                <element signature="e#2491#2729#0" />
+                <element signature="e#2777#3767#0" />
+                <element signature="e#6143#6519#0" />
+                <element signature="e#6569#6785#0" />
+                <marker date="1536492404228" expanded="true" signature="6960:7347" ph="..." />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/../MQTTswitches/mqtt_switch.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="60">
+              <caret line="16" column="50" lean-forward="true" selection-start-line="16" selection-start-column="50" selection-end-line="16" selection-end-column="50" />
             </state>
           </provider>
         </entry>
@@ -131,7 +204,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>wait_for_msg</find>
       <find>pin_up</find>
       <find>pin_down</find>
       <find>t_SW</find>
@@ -149,6 +221,10 @@
       <find>last_state_register</find>
       <find>nowState</find>
       <find>boot</find>
+      <find>minutes_in_emergency_mode</find>
+      <find>self.client</find>
+      <find>check_update</find>
+      <find>wait_for_msg</find>
     </findStrings>
     <replaceStrings>
       <replace>self.pin_up</replace>
@@ -163,6 +239,9 @@
       <replace>startMQTTclient</replace>
       <replace>last_buttons_state</replace>
       <replace>current_buttons_state</replace>
+      <replace>self.minutes_in_emergency_mode</replace>
+      <replace>self.mqtt_client</replace>
+      <replace>mqtt_wait_loop</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -189,21 +268,27 @@
         <option value="$PROJECT_DIR$/HomePi_SmartRel_v1/config.json" />
         <option value="$PROJECT_DIR$/HomePi_SmartRel_v1/wifi_tools.py" />
         <option value="$PROJECT_DIR$/HomePi_SmartRel_v1/SmartRel.py" />
+        <option value="$PROJECT_DIR$/jReader.py" />
         <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.1/SmartRel.py" />
-        <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.1/main.py" />
         <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.1/wifi_tools.py" />
+        <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.1/main.py" />
+        <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.1/config.json" />
+        <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.2/config.json" />
+        <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.2/SmartRel.py" />
+        <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.2/main.py" />
+        <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.2/wifi_tools.py" />
+        <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.3/wifi_tools.py" />
+        <option value="$PROJECT_DIR$/HomePi_SmartRel_v1.3/SmartRel.py" />
+        <option value="$PROJECT_DIR$/../MQTTswitches/MQTTlogger.py" />
       </list>
     </option>
   </component>
-  <component name="MicroPythonDevices" devicePath="/dev/ttyUSB1" />
+  <component name="MicroPythonDevices" devicePath="/dev/ttyUSB0" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="67" />
-    <option name="y" value="28" />
-    <option name="width" value="1213" />
+    <option name="x" value="545" />
+    <option name="y" value="27" />
+    <option name="width" value="1372" />
     <option name="height" value="1052" />
-  </component>
-  <component name="ProjectLevelVcsManager">
-    <ConfirmationsSetting value="2" id="Add" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -214,13 +299,8 @@
         <subPane>
           <expand>
             <path>
-              <item name="ESP32_2" type="b2602c69:ProjectViewProjectNode" />
-              <item name="ESP32_2" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="ESP32_2" type="b2602c69:ProjectViewProjectNode" />
-              <item name="ESP32_2" type="462c0819:PsiDirectoryNode" />
-              <item name="HomePi_SmartRel_v1.1" type="462c0819:PsiDirectoryNode" />
+              <item name="ESP32" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ESP32" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -230,8 +310,8 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../LocalSwitch/main/HomePi_LocWinSw.py" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/.." />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.micropython.configurable" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -257,13 +337,21 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="MicroPython.Flash jReader.py">
+  <component name="RunManager" selected="MicroPython.Flash SmartRel.py (2)">
     <configuration name="Flash SmartRel.py (1)" type="MicroPythonConfigurationType" factoryName="MicroPython" nameIsGenerated="true" path="$PROJECT_DIR$/HomePi_SmartRel_v1/SmartRel.py">
+      <module name="ESP32" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Flash SmartRel.py (2)" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/HomePi_SmartRel_v1.1/SmartRel.py">
       <module name="ESP32" />
       <method v="2" />
     </configuration>
     <configuration name="Flash SmartRel.py" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/SmartRel.py">
       <module name="ESP32_2" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Flash jReader.py (1)" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/jReader.py">
+      <module name="ESP32" />
       <method v="2" />
     </configuration>
     <configuration name="Flash jReader.py" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/HomePi_SmartRel_v1/jReader.py">
@@ -278,30 +366,22 @@
       <module name="ESP32_2" />
       <method v="2" />
     </configuration>
-    <configuration name="Flash startWifi_staticIP.py" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/startWifi_staticIP.py">
-      <module name="ESP32_2" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Flash updateClockESP.py" type="MicroPythonConfigurationType" factoryName="MicroPython" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/updateClockESP.py">
-      <module name="ESP32_2" />
-      <method v="2" />
-    </configuration>
     <list>
       <item itemvalue="MicroPython.Flash SmartRel.py (1)" />
       <item itemvalue="MicroPython.Flash main.py" />
       <item itemvalue="MicroPython.Flash main.py (1)" />
-      <item itemvalue="MicroPython.Flash startWifi_staticIP.py" />
-      <item itemvalue="MicroPython.Flash updateClockESP.py" />
       <item itemvalue="MicroPython.Flash SmartRel.py" />
       <item itemvalue="MicroPython.Flash jReader.py" />
+      <item itemvalue="MicroPython.Flash jReader.py (1)" />
+      <item itemvalue="MicroPython.Flash SmartRel.py (2)" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="MicroPython.Flash SmartRel.py (2)" />
+        <item itemvalue="MicroPython.Flash jReader.py (1)" />
         <item itemvalue="MicroPython.Flash jReader.py" />
         <item itemvalue="MicroPython.Flash main.py (1)" />
         <item itemvalue="MicroPython.Flash SmartRel.py" />
-        <item itemvalue="MicroPython.Flash startWifi_staticIP.py" />
-        <item itemvalue="MicroPython.Flash updateClockESP.py" />
       </list>
     </recent_temporary>
   </component>
@@ -399,11 +479,11 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="67" y="28" width="1213" height="1052" extended-state="0" />
+    <frame x="545" y="27" width="1372" height="1052" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.4967462" visible="true" weight="0.19579832" />
-      <window_info id="Structure" order="1" sideWeight="0.5032538" side_tool="true" visible="true" weight="0.19579832" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.4967462" visible="true" weight="0.18754633" />
+      <window_info id="Structure" order="1" sideWeight="0.5032538" side_tool="true" weight="0.19579832" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.329718" />
@@ -413,7 +493,7 @@
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.329718" />
       <window_info anchor="bottom" id="Version Control" order="7" weight="0.329718" />
-      <window_info anchor="bottom" id="Terminal" order="8" />
+      <window_info anchor="bottom" id="Terminal" order="8" weight="0.329718" />
       <window_info anchor="bottom" id="Event Log" order="9" sideWeight="0.5004583" side_tool="true" weight="0.329718" />
       <window_info anchor="bottom" id="Python Console" order="10" weight="0.3286334" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -452,13 +532,7 @@
     <entry file="file://$PROJECT_DIR$/MQTT_tutorial.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/../LocalSwitch/main/Sched_MQTT.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="536">
-          <caret line="175" selection-start-line="175" selection-end-line="175" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/../LocalSwitch/main/Sched_MQTT.py" />
     <entry file="file://$PROJECT_DIR$/HomePi_uScheduler_v0/scheduler1.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="60">
@@ -468,8 +542,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/MQTTcom.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1035">
-          <caret line="198" column="39" selection-start-line="198" selection-start-column="27" selection-end-line="198" selection-end-column="39" />
+        <state relative-caret-position="-750">
+          <caret line="12" selection-start-line="12" selection-end-line="12" />
         </state>
       </provider>
     </entry>
@@ -489,71 +563,78 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/localswitchOnly.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-180">
-          <caret line="9" lean-forward="true" selection-start-line="9" selection-end-line="9" />
-        </state>
+        <state relative-caret-position="-630" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/boot/boot.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/../LocalSwitch/main/HomePi_LocWinSw.py">
+    <entry file="file://$PROJECT_DIR$/../LocalSwitch/main/HomePi_LocWinSw.py" />
+    <entry file="file://$PROJECT_DIR$/../LocalSwitch/main/localswitches.py" />
+    <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.3/jReader.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-495" />
+        <state relative-caret-position="195">
+          <caret line="13" column="38" selection-start-line="13" selection-start-column="38" selection-end-line="13" selection-end-column="38" />
+        </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../LocalSwitch/main/localswitches.py">
+    <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.3/config.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="60">
-          <caret line="133" column="5" lean-forward="true" selection-start-line="133" selection-start-column="4" selection-end-line="166" selection-end-column="27" />
+          <caret line="4" selection-start-line="4" selection-end-line="4" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/jReader.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="1" selection-start-column="1" selection-end-line="39" />
-        </state>
-      </provider>
+    <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.3/main.py">
+      <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.1/config.json">
+    <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.3/SmartRel.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" lean-forward="true" selection-start-line="1" selection-end-line="1" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.1/wifi_tools.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="31" column="34" selection-start-line="31" selection-start-column="34" selection-end-line="31" selection-end-column="34" />
-          <folding>
-            <element signature="e#0#35#0" expanded="true" />
-            <element signature="e#120#882#0" />
-            <element signature="e#369#882#0" />
-            <element signature="e#924#6051#0" />
-            <element signature="e#6077#7187#0" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.1/SmartRel.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="615">
-          <caret line="41" column="41" selection-start-line="6" selection-end-line="42" />
+        <state relative-caret-position="915">
+          <caret line="61" lean-forward="true" selection-start-line="61" selection-end-line="61" />
           <folding>
             <element signature="e#0#24#0" expanded="true" />
+            <element signature="e#3537#3619#0" />
+            <element signature="e#3656#3738#0" />
+            <element signature="e#3774#3856#0" />
+            <element signature="e#3941#4091#0" />
+            <element signature="e#4129#4275#0" />
+            <element signature="e#4313#4440#0" />
+            <element signature="e#4480#4611#0" />
+            <element signature="e#4696#5610#0" />
+            <element signature="e#5640#5815#0" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.1/main.py">
+    <entry file="file://$PROJECT_DIR$/HomePi_SmartRel_v1.3/wifi_tools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="12" lean-forward="true" selection-start-line="12" selection-end-line="12" />
+        <state relative-caret-position="1215">
+          <caret line="159" column="28" lean-forward="true" selection-start-line="159" selection-start-column="28" selection-end-line="159" selection-end-column="28" />
           <folding>
-            <element signature="e#82#97#0" expanded="true" />
+            <element signature="e#0#35#0" expanded="true" />
+            <element signature="e#120#831#0" />
+            <element signature="e#857#1968#0" />
+            <element signature="e#2491#2729#0" />
+            <element signature="e#2777#3767#0" />
+            <element signature="e#6143#6519#0" />
+            <element signature="e#6569#6785#0" />
+            <marker date="1536492404228" expanded="true" signature="6960:7347" ph="..." />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../MQTTswitches/MQTTlogger.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="11" column="47" selection-start-line="11" selection-start-column="47" selection-end-line="11" selection-end-column="47" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../MQTTswitches/mqtt_switch.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="16" column="50" lean-forward="true" selection-start-line="16" selection-start-column="50" selection-end-line="16" selection-end-column="50" />
         </state>
       </provider>
     </entry>

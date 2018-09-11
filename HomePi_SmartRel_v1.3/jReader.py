@@ -22,8 +22,8 @@ class JSONconfig:
                            "out_topic": 'HomePi/Dvir/Messages',
                            "pin_in1": 22, "pin_in2": 19, "pin_out1": 23, "pin_out2": 18,
                            "static_ip": None,
-                           "server": '192.168.2.113'}
-        self.def_values["listen_topics"] = [self.def_values["client_topic"],'HomePi/Dvir/Windows/All']
+                           "server": '192.168.2.200', "user": "guy", "password": "kupelu9e"}
+        self.def_values["listen_topics"] = [self.def_values["client_topic"], 'HomePi/Dvir/Windows/All']
 
     def create_default_file(self):
         self.create_def_vals()
@@ -37,3 +37,10 @@ class JSONconfig:
         self.read_file()
         self.data_from_file[key] = value
         self.write2file(self.data_from_file)
+
+
+if __name__ == "__main__":
+    name = "kRoomWindow"
+    create_config_files = JSONconfig('config.json')
+    create_config_files.update_value("client_ID", name)
+    create_config_files.update_value("client_topic", 'HomePi/Dvir/Windows/' + name)

@@ -1,45 +1,10 @@
 from wifi_tools import *
 import utime
 import machine
-import json
 import os
-
-
-class JSONconfig:
-    def __init__(self, filename):
-        self.filename = filename
-        self.def_values = {}
-        self.data_from_file = None
-        self.read_file()
-
-    def read_file(self):
-        if self.filename in os.listdir():
-            with open(self.filename, 'r') as f:
-                self.data_from_file = json.load(f)
-        else:
-            self.create_default_file()
-
-    def create_def_vals(self):
-        self.def_values = {"client_ID": 'ESP32_1',
-                           "client_topic": 'HomePi/Dvir/my_device',
-                           "out_topic": 'HomePi/Dvir/Messages',
-                           "pin_in1": 22, "pin_in2": 19, "pin_out1": 23, "pin_out2": 18,
-                           "static_ip": None,
-                           "server": '192.168.2.113'}
-        self.def_values["listen_topics"] = [self.def_values["client_topic"], 'HomePi/Dvir/Windows/All']
-
-    def create_default_file(self):
-        self.create_def_vals()
-        self.write2file(self.def_values)
-
-    def write2file(self, dict):
-        with open(self.filename, 'w') as f:
-            json.dump(dict, f)
-
-    def update_value(self, key, value):
-        self.read_file()
-        self.data_from_file[key] = value
-        self.write2file(self.data_from_file)
+# import uos
+import jReader
+import ubinascii
 
 
 class ErrorLog:
@@ -98,6 +63,12 @@ class ErrorLog:
         if self.output2screen == 1:
             print(self.msg)
 
+        # if os.stat(self.err_log)[6] > 1000:
+        #     self.pub("error_log file exceeds its allowed size")
+        # if os.stat(self.err_log)[6] > 5000:
+        #     self.pub("error_log file deleted")
+        #     os.remove(self.err_log)
+
 
 class DualRelaySwitcher(MQTTCommander, ErrorLog):
     # This class defines the physical HW of GPIO on port
@@ -109,7 +80,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
 
     def __init__(self, pin_in1=4, pin_in2=5, pin_out1=14, pin_out2=12,
                  server=None, client_id=None, topic1=None, topic2=None,
-                 static_ip=''):
+                 static_ip='', user=None, password=None):
 
         # Pin definitions
         self.pin_up = machine.Pin(pin_out1, machine.Pin.OUT, machine.Pin.PULL_UP, value=1)
@@ -124,7 +95,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
 
         # Class can be activated without MQTTcommander
         if server is not None and client_id is not None and topic1 is not None:
-            MQTTCommander.__init__(self, server, client_id, topic1, topic2, static_ip)
+            MQTTCommander.__init__(self, server, client_id, topic1, topic2, static_ip, user=user, password=password)
         utime.sleep(2)
 
     #     CODE DOES NOT CONTINUE FROM DOWN HERE (LOOP IS IN MQTTCommader)
@@ -211,11 +182,16 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
         self.switch_off()
 
 
-config_file = JSONconfig('config.json')
-con_data = config_file.data_from_file
+# ################### Program Starts Here ####################
+config_file = 'config.json'
+saved_data = jReader.JSONconfig('config.json')
+con_data = saved_data.data_from_file
+client_id = ubinascii.hexlify(machine.unique_id())
+# client_id = con_data["client_ID"] # from config file - optional
+# ############################################################
 
 SmartRelay = DualRelaySwitcher(pin_in1=con_data["pin_in1"], pin_in2=con_data["pin_in2"], pin_out1=con_data["pin_out1"],
                                pin_out2=con_data["pin_out2"], server=con_data["server"],
-                               client_id=con_data["client_ID"], topic1=con_data["listen_topics"],
-                               topic2=con_data["out_topic"],
-                               static_ip=con_data["static_ip"])
+                               client_id=client_id, topic1=con_data["listen_topics"],
+                               topic2=con_data["out_topic"], static_ip=con_data["static_ip"], user=con_data["user"],
+                               password=con_data["password"])
