@@ -134,9 +134,11 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
             elif msg.lower() == msgs[1]:
                 self.switch_up()
                 self.pub(output1 + "Remote CMD: [UP]")
+                self.pub(msg="up", topic="HomePi/Dvir/kRoomWindow/State")
             elif msg.lower() == msgs[2]:
                 self.switch_down()
                 self.pub(output1 + "Remote CMD: [DOWN]")
+                self.pub(msg="down", topic="HomePi/Dvir/kRoomWindow/State")
             elif msg.lower() == msgs[3]:
                 self.pub(output1 + "Status CMD: [%s,%s,%s,%s]" % (
                     self.but_up_state(), self.rel_up_state(), self.but_down_state(), self.rel_down_state()))
