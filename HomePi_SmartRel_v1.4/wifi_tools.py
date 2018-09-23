@@ -20,11 +20,11 @@ class Connect2Wifi:
             self.sta_if.connect("HomeNetwork_2.4G", "guyd5161")
 
             # assign staticIP
-            if ip is not None:
-                self.sta_if.ifconfig((ip, "255.255.255.0", "192.168.2.1", "192.168.2.1"))  # static IP
-            while not self.sta_if.isconnected():
-                pass
-            utime.sleep(2)
+            # if ip is not None:
+            #     self.sta_if.ifconfig((ip, "255.255.255.0", "192.168.2.1", "192.168.2.1"))  # static IP
+            # while not self.sta_if.isconnected():
+            #     pass
+            # utime.sleep(2)
         print('network config:', self.sta_if.ifconfig())
 
 
@@ -42,7 +42,13 @@ class ClockUpdate:
             ntptime.settime()
             rtc = machine.RTC()
 
-            tm = utime.localtime(utime.mktime(utime.localtime()) + self.utc_shift * 3600)
+            # daylight saving
+            if 9 >= utime.localtime()[1] >= 4:
+                daylight = 1
+            else:
+                daylight = 0
+
+            tm = utime.localtime(utime.mktime(utime.localtime()) + (self.utc_shift + daylight) * 3600)
             tm = tm[0:3] + (0,) + tm[3:6] + (0,)
             rtc.datetime(tm)
             print("clock update successful", utime.localtime())
@@ -63,126 +69,138 @@ class ClockUpdate:
 
 
 class MQTTCommander(Connect2Wifi, ClockUpdate):
-    def __init__(self, server, client_id, topic1, topic2=None, static_ip='', qos=0, user=None, password=None):
+    def __init__(self, server, client_id, device_topic, listen_topics, msg_topic=None, static_ip=None, qos=0, user=None,
+                 password=None):
         self.server, self.mqtt_client_id = server, client_id
         self.user, self.password, self.qos = user, password, qos
-        self.topic1, self.topic2 = topic1, topic2
+        self.listen_topics, self.msg_topic, self.device_topic = listen_topics, msg_topic, device_topic
         self.mqtt_client, self.arrived_msg = None, None
-        self.last_buttons_state = []
+        self.last_buttons_state, self.last_ping_time = [], None
 
-        # ########### Parameters ##################
-        clock_update_interval = 2  # [hours]
+        self.boot_time = utime.localtime()
+
+        # ########### Time related Parameters ##################
+        clock_update_interval = 4  # [hours]
         self.num_of_fails = 2  # reach broker
         self.minutes_in_emergency_mode = 1  # [min]
-        # ##########################################
+        self.keep_alive_interval = 60  # [sec]
+        # ######################################################
 
         # ################ Start Services #################################
         Connect2Wifi.__init__(self, static_ip)
-        ClockUpdate.__init__(self, utc_shift=3, update_int=clock_update_interval)
+        ClockUpdate.__init__(self, utc_shift=2, update_int=clock_update_interval)
         # #################################################################
 
         self.startMQTTclient()
         utime.sleep(1)
 
-        self.pub('Boot- Broker IP: [%s], device ip: [%s]' % (server, self.sta_if.ifconfig()[0]))
+        self.pub('Boot- connected to broker: [%s], device ip: [%s]' % (server, self.sta_if.ifconfig()[0]))
         self.mqtt_wait_loop()
 
     def startMQTTclient(self):
         self.mqtt_client = MQTTClient(self.mqtt_client_id, self.server, self.qos, user=self.user,
-                                      password=self.password)#, keepalive=60)
+                                      password=self.password, keepalive=self.keep_alive_interval)
         self.mqtt_client.set_callback(self.on_message)
-        # self.mqtt_client.set_last_will(topic=self.topic2, msg="last_will", retain=False)
+        self.mqtt_client.set_last_will(topic=self.msg_topic,
+                                       msg=self.time_stamp() + ' [' + self.device_topic + ']' + ' died', retain=False)
 
         try:
             self.mqtt_client.connect()
-            for topic in self.topic1:
+            self.listen_topics.append(self.device_topic)
+            for topic in self.listen_topics:
                 self.mqtt_client.subscribe(topic)
-            print("Connected to MQTT server")
+            self.last_ping_time = utime.ticks_ms()
             return 1
         except OSError:
             self.notify_error("Error connecting MQTT broker")
             return 0
 
-    def pub(self, msg):
-        # publish to "HomePi/Dvir/Messages"
+    def pub(self, msg, topic=None):
         try:
-            self.mqtt_client.publish(self.topic2, "%s [%s] %s" % (self.time_stamp(), self.topic1[0], msg))
+            if topic is not None:
+                self.mqtt_client.publish(topic, "%s [%s] %s" % (self.time_stamp(), self.device_topic, msg))
+            else:
+                self.mqtt_client.publish(self.msg_topic, "%s [%s] %s" % (self.time_stamp(), self.device_topic, msg))
         except OSError:
             self.notify_error("fail to publish to broker")
 
     def on_message(self, topic, msg):
         def mqtt_commands(msg):
             msgs = ['reset', 'up', 'down', 'status', 'off', 'info']
+            output1 = "Topic:[%s], Message: " % (topic.decode("UTF-8").strip())
             if msg == msgs[0]:
-                self.pub("[Reset CMD]")
+                self.pub(output1 + "[Reset CMD]")
                 # emergnecy()
             elif msg.lower() == msgs[1]:
                 self.switch_up()
-                self.pub("Switch CMD: [UP]")
+                self.pub(output1 + "Remote CMD: [UP]")
             elif msg.lower() == msgs[2]:
                 self.switch_down()
-                self.pub("Switch CMD: [DOWN]")
+                self.pub(output1 + "Remote CMD: [DOWN]")
             elif msg.lower() == msgs[3]:
-                self.pub("Status CMD: Button_UP:[%s], Relay_UP:[%s], Button_Down:[%s], Relay_Down:[%s]" % (
+                self.pub(output1 + "Status CMD: [%s,%s,%s,%s]" % (
                     self.but_up_state(), self.rel_up_state(), self.but_down_state(), self.rel_down_state()))
             elif msg.lower() == msgs[4]:
                 self.switch_off()
-                self.pub("OFF")
+                self.pub(output1 + "Remote CMD: [OFF]")
             elif msg.lower() == msgs[5]:
-                self.pub([msg1 for msg1 in msgs])
+                p = '%d-%d-%d %d:%d:%d' % (
+                    self.boot_time[0], self.boot_time[1], self.boot_time[2], self.boot_time[3], self.boot_time[4],
+                    self.boot_time[5])
+                self.pub('Boot time: [%s], ip: [%s]' % (p, self.sta_if.ifconfig()[0]))
 
         self.arrived_msg = msg.decode("UTF-8").strip()
         mqtt_commands(msg=self.arrived_msg)
 
     def mqtt_wait_loop(self):
-        fails_counter = 0
+        fails_counter, off_timer, tot_disconnections = 0, 0, 0
+
         self.last_buttons_state = [self.but_up_state(), self.but_down_state()]
+
         while True:
             # detect button press
             self.check_switch_change()
             self.clock_update()
+            self.ping_broker(keep_time=self.keep_alive_interval)
 
             try:
                 # verify existance of MQTT server
                 self.mqtt_client.check_msg()
+                fails_counter = 0
 
             except OSError:
                 fails_counter += 1
-                self.notify_error("Fail Status #%d: Wifi is: %s" % (fails_counter, self.is_connected()))
+
+                self.notify_error("Fail Status #%d: Wifi is Connected: %s " % (fails_counter, self.is_connected()))
 
                 # Check Wifi connectivity
                 if self.is_connected() == 0:
                     self.notify_error("Try reconnect wifi #%d" % fails_counter)
                 else:
-                    # Try reconnect MQTT client
+                    # wifi is connected.Try reconnect MQTT client
                     if fails_counter <= self.num_of_fails:
+                        # connection failed:
                         if self.startMQTTclient() == 0:
                             utime.sleep(2)
                         else:
-                            fails_counter = 0
-                    # after  - only button switch without MQTT for some time
+                            continue
                     else:
-
-                        # if self.startMQTTclient() == 0 and fails_counter > self.num_of_fails:
-                        #     # Emeregncy mode- stop looking for MQTT for some time, and comply only to physical switches
+                        # Emeregncy mode- stop looking for MQTT for some time, and comply only to physical switches
                         self.notify_error(
                             "fail reaching MQTT server- %d times, entering emergency mode for %d minutes" % (
                                 self.num_of_fails, self.minutes_in_emergency_mode))
 
-                        while fails_counter < (60 / self.t_SW) * self.minutes_in_emergency_mode + self.num_of_fails:
+                        start_timeout = utime.ticks_ms()
+                        time_in_loop = 0
+                        while time_in_loop < self.minutes_in_emergency_mode:
+                            # accept button switch during this time
                             self.check_switch_change()
+                            time_in_loop = (utime.ticks_ms() - start_timeout) / 1000 / 60
                             utime.sleep(self.t_SW)
-                            fails_counter += 1
-
                         fails_counter = 0
-
+                        # exiting emergency
             utime.sleep(self.t_SW)
 
-        # Try to disconnect
-
-        # self.mqtt_client.disconnect()
-        # except OSError:
-        #     self.notify_error("fail to disconnect broker")
 
     def check_switch_change(self):
         current_buttons_state = [self.but_up_state(), self.but_down_state()]
@@ -203,3 +221,13 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
 
     def notify_error(self, msg):
         self.append_log(msg)
+
+    def ping_broker(self, keep_time):
+        # for keepalive purposes
+        if utime.ticks_ms() > self.last_ping_time + keep_time * 1000:
+            try:
+                self.mqtt_client.ping()
+                self.last_ping_time = utime.ticks_ms()
+            except OSError:
+                # fail
+                pass

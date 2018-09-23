@@ -79,8 +79,8 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
     # but with a 1 second delay - to enable wifi and broker to regain connection
 
     def __init__(self, pin_in1=4, pin_in2=5, pin_out1=14, pin_out2=12,
-                 server=None, client_id=None, topic1=None, topic2=None,
-                 static_ip='', user=None, password=None):
+                 server=None, client_id=None, listen_topics=None, msg_topic=None, device_topic=None,
+                 static_ip=None, user=None, password=None, rev=None):
 
         # Pin definitions
         self.pin_up = machine.Pin(pin_out1, machine.Pin.OUT, machine.Pin.PULL_UP, value=1)
@@ -94,8 +94,9 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
         ErrorLog.__init__(self, log_filename='error.log')
 
         # Class can be activated without MQTTcommander
-        if server is not None and client_id is not None and topic1 is not None:
-            MQTTCommander.__init__(self, server, client_id, topic1, topic2, static_ip, user=user, password=password)
+        if server is not None and client_id is not None and device_topic is not None:
+            MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic, msg_topic=msg_topic,
+                                   listen_topics=listen_topics, static_ip=static_ip, user=user, password=password)
         utime.sleep(2)
 
     #     CODE DOES NOT CONTINUE FROM DOWN HERE (LOOP IS IN MQTTCommader)
@@ -151,7 +152,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
         if self.but_up_state() == 1 and self.rel_up_state() == 0:
             self.switch_up()
             try:
-                self.pub("Button Switch: [UP]")
+                self.pub("Button: [UP]")
             except NameError:
                 print("UP")
                 self.append_log("fail to publish to broker")
@@ -159,7 +160,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
         elif self.but_down_state() == 1 and self.rel_down_state() == 0:
             self.switch_down()
             try:
-                self.pub("Button Switch: [DOWN]")
+                self.pub("Button: [DOWN]")
             except NameError:
                 print("DOWN")
                 self.append_log("fail to publish to broker")
@@ -168,7 +169,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
         elif self.but_down_state() == 0 and self.but_down_state() == 0:
             self.switch_off()
             try:
-                self.pub("Button Switch: [OFF]")
+                self.pub("Button: [OFF]")
             except NameError:
                 print("OFF")
                 self.append_log("fail to publish to broker")
@@ -183,6 +184,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
 
 
 # ################### Program Starts Here ####################
+rev = '1.6'
 config_file = 'config.json'
 saved_data = jReader.JSONconfig('config.json')
 con_data = saved_data.data_from_file
@@ -192,6 +194,6 @@ client_id = ubinascii.hexlify(machine.unique_id())
 
 SmartRelay = DualRelaySwitcher(pin_in1=con_data["pin_in1"], pin_in2=con_data["pin_in2"], pin_out1=con_data["pin_out1"],
                                pin_out2=con_data["pin_out2"], server=con_data["server"],
-                               client_id=client_id, topic1=con_data["listen_topics"],
-                               topic2=con_data["out_topic"], static_ip=con_data["static_ip"], user=con_data["user"],
-                               password=con_data["password"])
+                               client_id=client_id, listen_topics=con_data["listen_topics"],
+                               msg_topic=con_data["out_topic"], static_ip=con_data["static_ip"], user=con_data["user"],
+                               device_topic=con_data["client_topic"], password=con_data["password"], rev=rev)
