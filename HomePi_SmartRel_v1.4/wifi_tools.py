@@ -75,6 +75,8 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.user, self.password, self.qos = user, password, qos
         self.listen_topics, self.msg_topic, self.device_topic = listen_topics, msg_topic, device_topic
         self.mqtt_client, self.arrived_msg = None, None
+        # self.state_topic = "HomePi/Dvir/Windows/kRoomWindow/State"
+        self.avail_topic = "HomePi/Dvir/Windows/kRoomWindow/Avail"
         self.last_buttons_state, self.last_ping_time = [], None
 
         self.boot_time = utime.localtime()
@@ -101,8 +103,10 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.mqtt_client = MQTTClient(self.mqtt_client_id, self.server, self.qos, user=self.user,
                                       password=self.password, keepalive=self.keep_alive_interval)
         self.mqtt_client.set_callback(self.on_message)
-        self.mqtt_client.set_last_will(topic=self.msg_topic,
-                                       msg=self.time_stamp() + ' [' + self.device_topic + ']' + ' died', retain=False)
+        # self.mqtt_client.set_last_will(topic=self.msg_topic,
+        #                                msg=self.time_stamp() + ' [' + self.device_topic + ']' + ' died', retain=False)
+        self.mqtt_client.set_last_will(topic=self.avail_topic,msg="offline", retain=True)
+
 
         try:
             self.mqtt_client.connect()
@@ -110,6 +114,8 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
             for topic in self.listen_topics:
                 self.mqtt_client.subscribe(topic)
             self.last_ping_time = utime.ticks_ms()
+            self.mqtt_client.publish(self.avail_topic, "online", retain=True)
+
             return 1
         except OSError:
             self.notify_error("Error connecting MQTT broker")
@@ -128,17 +134,15 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         def mqtt_commands(msg):
             msgs = ['reset', 'up', 'down', 'status', 'off', 'info']
             output1 = "Topic:[%s], Message: " % (topic.decode("UTF-8").strip())
-            if msg == msgs[0]:
-                self.pub(output1 + "[Reset CMD]")
-                # emergnecy()
-            elif msg.lower() == msgs[1]:
+
+            if msg.lower() == msgs[1]:
                 self.switch_up()
                 self.pub(output1 + "Remote CMD: [UP]")
-                self.pub(msg="up", topic="HomePi/Dvir/kRoomWindow/State")
+                # self.mqtt_client.publish(self.state_topic, "up", retain=True)
             elif msg.lower() == msgs[2]:
                 self.switch_down()
                 self.pub(output1 + "Remote CMD: [DOWN]")
-                self.pub(msg="down", topic="HomePi/Dvir/kRoomWindow/State")
+                # self.mqtt_client.publish(self.state_topic, "down", retain=True)
             elif msg.lower() == msgs[3]:
                 self.pub(output1 + "Status CMD: [%s,%s,%s,%s]" % (
                     self.but_up_state(), self.rel_up_state(), self.but_down_state(), self.rel_down_state()))
@@ -202,7 +206,6 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                         fails_counter = 0
                         # exiting emergency
             utime.sleep(self.t_SW)
-
 
     def check_switch_change(self):
         current_buttons_state = [self.but_up_state(), self.but_down_state()]
