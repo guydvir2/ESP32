@@ -67,6 +67,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.server, self.mqtt_client_id = server, client_id
         self.user, self.password, self.qos = user, password, qos
         self.topic1, self.topic2 = topic1, topic2
+        self.state_topic = "HomePi/Dvir/Windows/kRoomWindows/State"
         self.mqtt_client, self.arrived_msg = None, None
         self.last_buttons_state = []
 
@@ -76,10 +77,10 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.minutes_in_emergency_mode = 1  # [min]
         # ##########################################
 
-        # ################ Start Services #################################
+        # ################ Start Services ########################################
         Connect2Wifi.__init__(self, static_ip)
         ClockUpdate.__init__(self, utc_shift=3, update_int=clock_update_interval)
-        # #################################################################
+        # ########################################################################
 
         self.startMQTTclient()
         utime.sleep(1)
@@ -89,7 +90,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
 
     def startMQTTclient(self):
         self.mqtt_client = MQTTClient(self.mqtt_client_id, self.server, self.qos, user=self.user,
-                                      password=self.password)#, keepalive=60)
+                                      password=self.password)  # , keepalive=60)
         self.mqtt_client.set_callback(self.on_message)
         # self.mqtt_client.set_last_will(topic=self.topic2, msg="last_will", retain=False)
 
@@ -113,15 +114,15 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
     def on_message(self, topic, msg):
         def mqtt_commands(msg):
             msgs = ['reset', 'up', 'down', 'status', 'off', 'info']
-            if msg == msgs[0]:
-                self.pub("[Reset CMD]")
-                # emergnecy()
-            elif msg.lower() == msgs[1]:
+
+            if msg.lower() == msgs[1]:
                 self.switch_up()
                 self.pub("Switch CMD: [UP]")
+                self.mqtt_client.publish(topic=self.state_topic, payload="up", retain=True)
             elif msg.lower() == msgs[2]:
                 self.switch_down()
                 self.pub("Switch CMD: [DOWN]")
+                self.mqtt_client.publish(topic=self.state_topic, payload="down", retain=True)
             elif msg.lower() == msgs[3]:
                 self.pub("Status CMD: Button_UP:[%s], Relay_UP:[%s], Button_Down:[%s], Relay_Down:[%s]" % (
                     self.but_up_state(), self.rel_up_state(), self.but_down_state(), self.rel_down_state()))
