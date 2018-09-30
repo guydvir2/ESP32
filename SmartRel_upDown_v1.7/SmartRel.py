@@ -2,7 +2,6 @@ from wifi_tools import *
 import utime
 import machine
 import os
-# import uos
 import jReader
 import ubinascii
 
@@ -80,7 +79,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
 
     def __init__(self, pin_in1=4, pin_in2=5, pin_out1=14, pin_out2=12,
                  server=None, client_id=None, listen_topics=None, msg_topic=None, device_topic=None,
-                 static_ip=None, user=None, password=None, rev=None):
+                 static_ip=None, user=None, password=None, rev=None, state_topic=None, avail_topic=None):
 
         # Pin definitions
         self.pin_up = machine.Pin(pin_out1, machine.Pin.OUT, machine.Pin.PULL_UP, value=1)
@@ -95,7 +94,8 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
 
         # Class can be activated without MQTTcommander
         if server is not None and client_id is not None and device_topic is not None:
-            MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic, msg_topic=msg_topic,
+            MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
+                                   msg_topic=msg_topic, state_topic=state_topic, avail_topic=avail_topic,
                                    listen_topics=listen_topics, static_ip=static_ip, user=user, password=password)
         utime.sleep(2)
 
@@ -184,16 +184,16 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
 
 
 # ################### Program Starts Here ####################
-rev = '1.6'
+rev = '1.7'
 config_file = 'config.json'
 saved_data = jReader.JSONconfig('config.json')
 con_data = saved_data.data_from_file
 client_id = ubinascii.hexlify(machine.unique_id())
-# client_id = con_data["client_ID"] # from config file - optional
 # ############################################################
 
 SmartRelay = DualRelaySwitcher(pin_in1=con_data["pin_in1"], pin_in2=con_data["pin_in2"], pin_out1=con_data["pin_out1"],
                                pin_out2=con_data["pin_out2"], server=con_data["server"],
                                client_id=client_id, listen_topics=con_data["listen_topics"],
                                msg_topic=con_data["out_topic"], static_ip=con_data["static_ip"], user=con_data["user"],
-                               device_topic=con_data["client_topic"], password=con_data["password"], rev=rev)
+                               device_topic=con_data["client_topic"], password=con_data["password"], rev=rev,
+                               state_topic=con_data["state_topic"], avail_topic=con_data["avail_topic"])

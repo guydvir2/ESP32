@@ -24,7 +24,7 @@ class Connect2Wifi:
             #     self.sta_if.ifconfig((ip, "255.255.255.0", "192.168.2.1", "192.168.2.1"))  # static IP
             # while not self.sta_if.isconnected():
             #     pass
-            # utime.sleep(2)
+            utime.sleep(3)
         print('network config:', self.sta_if.ifconfig())
 
 
@@ -70,13 +70,12 @@ class ClockUpdate:
 
 class MQTTCommander(Connect2Wifi, ClockUpdate):
     def __init__(self, server, client_id, device_topic, listen_topics, msg_topic=None, static_ip=None, qos=0, user=None,
-                 password=None):
+                 password=None, state_topic=None, avail_topic=None):
         self.server, self.mqtt_client_id = server, client_id
         self.user, self.password, self.qos = user, password, qos
         self.listen_topics, self.msg_topic, self.device_topic = listen_topics, msg_topic, device_topic
         self.mqtt_client, self.arrived_msg = None, None
-        # self.state_topic = "HomePi/Dvir/Windows/kRoomWindow/State"
-        self.avail_topic = "HomePi/Dvir/Windows/kRoomWindow/Avail"
+        self.avail_topic, self.state_topic = avail_topic, state_topic
         self.last_buttons_state, self.last_ping_time = [], None
 
         self.boot_time = utime.localtime()
@@ -103,10 +102,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.mqtt_client = MQTTClient(self.mqtt_client_id, self.server, self.qos, user=self.user,
                                       password=self.password, keepalive=self.keep_alive_interval)
         self.mqtt_client.set_callback(self.on_message)
-        # self.mqtt_client.set_last_will(topic=self.msg_topic,
-        #                                msg=self.time_stamp() + ' [' + self.device_topic + ']' + ' died', retain=False)
-        self.mqtt_client.set_last_will(topic=self.avail_topic,msg="offline", retain=True)
-
+        self.mqtt_client.set_last_will(topic=self.avail_topic, msg="offline", retain=True)
 
         try:
             self.mqtt_client.connect()
@@ -138,17 +134,18 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
             if msg.lower() == msgs[1]:
                 self.switch_up()
                 self.pub(output1 + "Remote CMD: [UP]")
-                # self.mqtt_client.publish(self.state_topic, "up", retain=True)
+                self.mqtt_client.publish(self.state_topic, "up", retain=True)
             elif msg.lower() == msgs[2]:
                 self.switch_down()
                 self.pub(output1 + "Remote CMD: [DOWN]")
-                # self.mqtt_client.publish(self.state_topic, "down", retain=True)
+                self.mqtt_client.publish(self.state_topic, "down", retain=True)
             elif msg.lower() == msgs[3]:
                 self.pub(output1 + "Status CMD: [%s,%s,%s,%s]" % (
                     self.but_up_state(), self.rel_up_state(), self.but_down_state(), self.rel_down_state()))
             elif msg.lower() == msgs[4]:
                 self.switch_off()
                 self.pub(output1 + "Remote CMD: [OFF]")
+                self.mqtt_client.publish(self.state_topic, "off", retain=True)
             elif msg.lower() == msgs[5]:
                 p = '%d-%d-%d %d:%d:%d' % (
                     self.boot_time[0], self.boot_time[1], self.boot_time[2], self.boot_time[3], self.boot_time[4],
