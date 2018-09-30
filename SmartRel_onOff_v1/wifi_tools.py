@@ -138,11 +138,14 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
 
                 if int(num) <= len(self.output_hw) - 1:
                     self.output_hw[int(num)].value(func_int)
-                    self.pub(output1 + "Remote CMD: Switch [%s][%s]" % (num, func))
+                    self.pub(output1 + "[Remote]: Switch [%s][%s]" % (num, func))
                     self.mqtt_client.publish(self.state_topic, msg, retain=True)
 
             elif msg is "status":
-                self.pub(output1)
+                [device.value() for device in self.input_hw]
+                self.pub(output1 + "[Remote]: Switches[%s] Buttons[%s]" % (
+                    str([device.value() for device in self.output_hw]),
+                    str([device.value() for device in self.input_hw])))
 
             elif msg.lower() == "info":
                 p = '%d-%d-%d %d:%d:%d' % (
@@ -151,7 +154,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                 self.pub('Boot time: [%s], ip: [%s]' % (p, self.sta_if.ifconfig()[0]))
 
             else:
-                self.pub(output1+" invalid command")
+                self.pub(output1 + " invalid command")
 
         self.arrived_msg = msg.decode("UTF-8").strip()
         mqtt_commands(msg=self.arrived_msg)

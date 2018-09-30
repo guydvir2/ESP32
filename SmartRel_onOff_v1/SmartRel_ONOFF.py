@@ -92,47 +92,9 @@ class MultiRelaySwitcher(MQTTCommander, ErrorLog):
                                    listen_topics=listen_topics, static_ip=static_ip, user=user, password=password)
         utime.sleep(2)
 
-        # self.start()
-
     def switch_by_button(self):
         for i, device in enumerate(self.output_hw):
             device.value(self.input_hw[i].value())
-
-
-
-    # def button_switch(self):
-    #     # switch1_on.
-    #     if self.button1.value() == 1 and self.switch1.value() == 0:
-    #         self.switch1.value(1)
-    #         try:
-    #             self.pub("Button1: [ON]")
-    #         except NameError:
-    #             print("ON")
-    #             self.append_log("fail to publish to broker")
-    #     # switch2_on
-    #     elif self.button2.value() == 1 and self.switch2.value() == 0:
-    #         self.switch2.value(1)
-    #         try:
-    #             self.pub("Button2: [ON]")
-    #         except NameError:
-    #             print("ON")
-    #             self.append_log("fail to publish to broker")
-    #
-    #     # switch off
-    #     elif self.button2.value() == 0:
-    #         self.switch2.value(0)
-    #         try:
-    #             self.pub("Button2: [OFF]")
-    #         except NameError:
-    #             print("Off")
-    #             self.append_log("fail to publish to broker")
-    #     elif self.button1.value() == 0:
-    #         self.switch1.value(0)
-    #         try:
-    #             self.pub("Button1: [OFF]")
-    #         except NameError:
-    #             print("Off")
-    #             self.append_log("fail to publish to broker")
 
     def PBit(self):
         print("PowerOnBit started")
@@ -151,8 +113,9 @@ con_data = saved_data.data_from_file
 client_id = ubinascii.hexlify(machine.unique_id())
 # ############################################################
 
-SmartRelay = MultiRelaySwitcher(input_pins=con_data["input_pins"],output_pins=con_data["output_pins"], server=con_data["server"],
-                               client_id=client_id, listen_topics=con_data["listen_topics"],
-                               msg_topic=con_data["out_topic"], static_ip=con_data["static_ip"], user=con_data["user"],
-                               device_topic=con_data["client_topic"], password=con_data["password"], rev=rev,
-                               state_topic=con_data["state_topic"], avail_topic=con_data["avail_topic"])
+SmartRelay = MultiRelaySwitcher(input_pins=con_data["input_pins"], output_pins=con_data["output_pins"],
+                                server=con_data["server"],
+                                client_id=client_id, listen_topics=con_data["listen_topics"],
+                                msg_topic=con_data["out_topic"], static_ip=con_data["static_ip"], user=con_data["user"],
+                                device_topic=con_data["client_topic"], password=con_data["password"], rev=rev,
+                                state_topic=con_data["state_topic"], avail_topic=con_data["avail_topic"])
