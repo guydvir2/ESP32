@@ -110,6 +110,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
             for topic in self.listen_topics:
                 self.mqtt_client.subscribe(topic)
             self.last_ping_time = utime.ticks_ms()
+            # last will msg
             self.mqtt_client.publish(self.avail_topic, "online", retain=True)
 
             return 1
@@ -129,7 +130,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
     def on_message(self, topic, msg):
         def mqtt_commands(msg):
             output1 = "Topic:[%s], Message: " % (topic.decode("UTF-8").strip())
-            if 'on' in msg or 'off' in msg:
+            if 'on' in msg.lower() or 'off' in msg.lower():
                 func, num = msg.split(',')[0], msg.split(',')[1]
                 if func is 'on':
                     func_int = 0
@@ -141,8 +142,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                     self.pub(output1 + "[Remote]: Switch [%s][%s]" % (num, func))
                     self.mqtt_client.publish(self.state_topic, msg, retain=True)
 
-            elif msg is "status":
-                [device.value() for device in self.input_hw]
+            elif msg.lower() is "status":
                 self.pub(output1 + "[Remote]: Switches[%s] Buttons[%s]" % (
                     str([device.value() for device in self.output_hw]),
                     str([device.value() for device in self.input_hw])))
@@ -153,11 +153,15 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                     self.boot_time[5])
                 self.pub('Boot time: [%s], ip: [%s]' % (p, self.sta_if.ifconfig()[0]))
 
+            elif msg.lower() is "err_log":
+                log_list = self.xport_logfile
+                self.pub(output1 + str(log_list))
+
             else:
                 self.pub(output1 + " invalid command")
 
-        self.arrived_msg = msg.decode("UTF-8").strip()
-        mqtt_commands(msg=self.arrived_msg)
+            self.arrived_msg = msg.decode("UTF-8").strip()
+            mqtt_commands(msg=self.arrived_msg)
 
     def mqtt_wait_loop(self):
         fails_counter, off_timer, tot_disconnections = 0, 0, 0

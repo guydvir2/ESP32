@@ -68,6 +68,14 @@ class ErrorLog:
         #     self.pub("error_log file deleted")
         #     os.remove(self.err_log)
 
+    def xport_logfile(self):
+        if os.path.isfile(self.err_log) is True:
+            with open(self.err_log, 'r') as f:
+                return f.readlines()
+        else:
+            print('file', self.err_log, ' not found')
+            return 0
+
 
 class MultiRelaySwitcher(MQTTCommander, ErrorLog):
     def __init__(self, input_pins, output_pins, server=None, client_id=None, listen_topics=None, msg_topic=None,
