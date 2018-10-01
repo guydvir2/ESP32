@@ -129,6 +129,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
 
     def on_message(self, topic, msg):
         def mqtt_commands(msg):
+            print("got this msg:", msg)
             output1 = "Topic:[%s], Message: " % (topic.decode("UTF-8").strip())
             if 'on' in msg.lower() or 'off' in msg.lower():
                 func, num = msg.split(',')[0], msg.split(',')[1]
