@@ -69,7 +69,8 @@ class ErrorLog:
         #     os.remove(self.err_log)
 
     def xport_logfile(self):
-        if os.path.isfile(self.err_log) is True:
+        # return os.listdir()
+        if self.err_log in os.listdir() is True:
             with open(self.err_log, 'r') as f:
                 return f.readlines()
         else:
@@ -77,28 +78,28 @@ class ErrorLog:
             return 0
 
 
-class MultiRelaySwitcher(MQTTCommander, ErrorLog):
+class MultiRelaySwitcher(ErrorLog, MQTTCommander):
     def __init__(self, input_pins, output_pins, server=None, client_id=None, listen_topics=None, msg_topic=None,
                  device_topic=None, static_ip=None, user=None, password=None, rev=None, state_topic=None,
                  avail_topic=None):
 
+        self.t_SW = 0.1
         self.input_hw = []
         self.output_hw = []
         for i, pin in enumerate(input_pins):
             self.input_hw.append(machine.Pin(pin, machine.Pin.IN, machine.Pin.PULL_UP))
             self.output_hw.append(machine.Pin(output_pins[i], machine.Pin.OUT, machine.Pin.PULL_UP, value=1))
 
-        self.t_SW = 0.1
-        self.PBit()
-
         ErrorLog.__init__(self, log_filename='error.log')
+        self.PBit()
 
         # Class can be activated without MQTTcommander
         if server is not None and client_id is not None and device_topic is not None:
             MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
                                    msg_topic=msg_topic, state_topic=state_topic, avail_topic=avail_topic,
                                    listen_topics=listen_topics, static_ip=static_ip, user=user, password=password)
-        utime.sleep(2)
+        utime.sleep(1)
+
 
     def switch_by_button(self):
         for i, device in enumerate(self.output_hw):
