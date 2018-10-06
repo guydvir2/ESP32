@@ -100,13 +100,50 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                                    listen_topics=listen_topics, static_ip=static_ip, user=user, password=password)
         utime.sleep(1)
 
-
     def switch_by_button(self):
         for i, device in enumerate(self.output_hw):
             device.value(self.input_hw[i].value())
 
     def hw_query(self):
         return [device.value() for device in self.input_hw]
+
+    def mqtt_commands(self, topic, msg):
+        output1 = "Topic:[%s], Message: " % (topic.decode("UTF-8").strip())
+        func_int, num_int = -1, -1
+
+        if 'on' in msg.lower() or 'off' in msg.lower():
+            func, num = msg.split(',')[0].strip(), msg.split(',')[1].strip()
+            if func is 'on':
+                func_int = 0
+            elif func is "off":
+                func_int = 1
+
+            if 0 <= int(num) <= len(self.output_hw) - 1:
+                num_int = int(num)
+
+                self.output_hw[num_int].value(func_int)
+                self.pub(output1 + "[Remote]: Switch [%s][%s]" % (num, func))
+                self.mqtt_client.publish(self.state_topic,
+                                         "%s" % str([[1, 0][device.value()] for device in self.output_hw]),
+                                         retain=True)
+        #
+        # elif msg.lower().strip() is "status":
+        #     self.pub(output1 + "[Remote]: Switches %s Buttons %s" % (
+        #         str([device.value() for device in self.output_hw]),
+        #         str([device.value() for device in self.input_hw])))
+        #
+        # elif msg.lower().strip() == "info":
+        #     p = '%d-%d-%d %d:%d:%d' % (
+        #         self.boot_time[0], self.boot_time[1], self.boot_time[2], self.boot_time[3], self.boot_time[4],
+        #         self.boot_time[5])
+        #     self.pub('Boot time: [%s], ip: [%s]' % (p, self.sta_if.ifconfig()[0]))
+
+        elif msg.lower().strip() is "err_log":
+            log_list = self.xport_logfile()
+            self.pub(output1 + str(log_list))
+
+        else:
+            self.pub(output1 + " invalid command")
 
     def PBit(self):
         print("PowerOnBit started")
@@ -119,8 +156,8 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
 
 # ################### Program Starts Here ####################
 rev = '1.0'
-config_file = 'config.json'
-saved_data = jReader.JSONconfig('config.json')
+config_file = 'config.froom'
+saved_data = jReader.JSONconfig('config.froom')
 con_data = saved_data.data_from_file
 client_id = ubinascii.hexlify(machine.unique_id())
 # ############################################################

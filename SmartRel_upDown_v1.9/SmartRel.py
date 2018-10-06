@@ -69,14 +69,7 @@ class ErrorLog:
         #     os.remove(self.err_log)
 
 
-class DualRelaySwitcher(MQTTCommander, ErrorLog):
-    # This class defines the physical HW of GPIO on port
-    # it calls 2 other classes: MQTTcommander - to enable remote commands ( send & receive )
-    # and ErrorLog- that saves a local log for errors only.
-    # MQTTCommander is incharge of : 1) MQTT, 2) calling an reconnecting wifi 3) clock updates
-    # for some reason - a malfunction in wifi or broker connectivity - a local button switch remain operational
-    # but with a 1 second delay - to enable wifi and broker to regain connection
-
+class UpDownRelaySwitcher(MQTTCommander, ErrorLog):
     def __init__(self, pin_in1=4, pin_in2=5, pin_out1=14, pin_out2=12,
                  server=None, client_id=None, listen_topics=None, msg_topic=None, device_topic=None,
                  static_ip=None, user=None, password=None, rev=None, state_topic=None, avail_topic=None):
@@ -116,6 +109,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
         self.pin_down.value(1)
         utime.sleep(self.t_SW)
         self.pin_up.value(1)
+
     #
 
     # Define hardware state retrieval
@@ -176,6 +170,31 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
     def hw_query(self):
         return [self.but_up_state(), self.but_down_state()]
 
+    def mqtt_commands(self, msg, topic):
+        msgs = ['reset', 'up', 'down', 'status', 'off', 'info']
+        output1 = "Topic:[%s], Message: " % (topic.decode("UTF-8").strip())
+
+        if msg.lower() == msgs[1]:
+            self.switch_up()
+            self.pub(output1 + "Remote CMD: [UP]")
+            self.mqtt_client.publish(self.state_topic, "up", retain=True)
+        elif msg.lower() == msgs[2]:
+            self.switch_down()
+            self.pub(output1 + "Remote CMD: [DOWN]")
+            self.mqtt_client.publish(self.state_topic, "down", retain=True)
+        elif msg.lower() == msgs[3]:
+            self.pub(output1 + "Status CMD: [%s,%s,%s,%s]" % (
+                self.but_up_state(), self.rel_up_state(), self.but_down_state(), self.rel_down_state()))
+        elif msg.lower() == msgs[4]:
+            self.switch_off()
+            self.pub(output1 + "Remote CMD: [OFF]")
+            self.mqtt_client.publish(self.state_topic, "off", retain=True)
+        elif msg.lower() == msgs[5]:
+            p = '%d-%d-%d %d:%d:%d' % (
+                self.boot_time[0], self.boot_time[1], self.boot_time[2], self.boot_time[3], self.boot_time[4],
+                self.boot_time[5])
+            self.pub('Boot time: [%s], ip: [%s]' % (p, self.sta_if.ifconfig()[0]))
+
     def PBit(self):
         print("PowerOnBit started")
         self.switch_down()
@@ -186,14 +205,13 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
 
 
 # ################### Program Starts Here ####################
-rev = '1.8'
+rev = '1.9'
 config_file = 'config.json'
 saved_data = jReader.JSONconfig('config.json')
 con_data = saved_data.data_from_file
 client_id = ubinascii.hexlify(machine.unique_id())
 # ############################################################
-
-SmartRelay = DualRelaySwitcher(pin_in1=con_data["pin_in1"], pin_in2=con_data["pin_in2"], pin_out1=con_data["pin_out1"],
+SmartRelay = UpDownRelaySwitcher(pin_in1=con_data["pin_in1"], pin_in2=con_data["pin_in2"], pin_out1=con_data["pin_out1"],
                                pin_out2=con_data["pin_out2"], server=con_data["server"],
                                client_id=client_id, listen_topics=con_data["listen_topics"],
                                msg_topic=con_data["out_topic"], static_ip=con_data["static_ip"], user=con_data["user"],

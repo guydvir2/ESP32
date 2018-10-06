@@ -128,33 +128,8 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
             self.notify_error("fail to publish to broker")
 
     def on_message(self, topic, msg):
-        def mqtt_commands(msg):
-            msgs = ['reset', 'up', 'down', 'status', 'off', 'info']
-            output1 = "Topic:[%s], Message: " % (topic.decode("UTF-8").strip())
-
-            if msg.lower() == msgs[1]:
-                self.switch_up()
-                self.pub(output1 + "Remote CMD: [UP]")
-                self.mqtt_client.publish(self.state_topic, "up", retain=True)
-            elif msg.lower() == msgs[2]:
-                self.switch_down()
-                self.pub(output1 + "Remote CMD: [DOWN]")
-                self.mqtt_client.publish(self.state_topic, "down", retain=True)
-            elif msg.lower() == msgs[3]:
-                self.pub(output1 + "Status CMD: [%s,%s,%s,%s]" % (
-                    self.but_up_state(), self.rel_up_state(), self.but_down_state(), self.rel_down_state()))
-            elif msg.lower() == msgs[4]:
-                self.switch_off()
-                self.pub(output1 + "Remote CMD: [OFF]")
-                self.mqtt_client.publish(self.state_topic, "off", retain=True)
-            elif msg.lower() == msgs[5]:
-                p = '%d-%d-%d %d:%d:%d' % (
-                    self.boot_time[0], self.boot_time[1], self.boot_time[2], self.boot_time[3], self.boot_time[4],
-                    self.boot_time[5])
-                self.pub('Boot time: [%s], ip: [%s]' % (p, self.sta_if.ifconfig()[0]))
-
         self.arrived_msg = msg.decode("UTF-8").strip()
-        mqtt_commands(msg=self.arrived_msg)
+        self.mqtt_commands(topic=topic, msg=self.arrived_msg)
 
     def mqtt_wait_loop(self):
         fails_counter, off_timer, tot_disconnections = 0, 0, 0
@@ -203,7 +178,6 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                         fails_counter = 0
                         # exiting emergency
             utime.sleep(self.t_SW)
-
 
     def check_switch_change(self):
         current_buttons_state = self.hw_query()
