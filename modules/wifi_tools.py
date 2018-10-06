@@ -73,12 +73,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                  password=None, state_topic=None, avail_topic=None):
         self.server, self.mqtt_client_id = server, client_id
         self.user, self.password, self.qos = user, password, qos
-<<<<<<< HEAD:HomePi_SmartRel_v1.4/wifi_tools.py
         self.listen_topics, self.msg_topic, self.device_topic = listen_topics, msg_topic, device_topic
-=======
-        self.topic1, self.topic2 = topic1, topic2
-        self.state_topic = "HomePi/Dvir/Windows/kRoomWindows/State"
->>>>>>> a8396fe98527310ac9883a7417f5ab836b29860e:HomePi_SmartRel_v1.3/wifi_tools.py
         self.mqtt_client, self.arrived_msg = None, None
         self.avail_topic, self.state_topic = avail_topic, state_topic
         self.last_buttons_state, self.last_ping_time = [], None
@@ -92,15 +87,10 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.keep_alive_interval = 60  # [sec]
         # ######################################################
 
-        # ################ Start Services ########################################
+        # ################ Start Services #################################
         Connect2Wifi.__init__(self, static_ip)
-<<<<<<< HEAD:HomePi_SmartRel_v1.4/wifi_tools.py
         ClockUpdate.__init__(self, utc_shift=2, update_int=clock_update_interval)
         # #################################################################
-=======
-        ClockUpdate.__init__(self, utc_shift=3, update_int=clock_update_interval)
-        # ########################################################################
->>>>>>> a8396fe98527310ac9883a7417f5ab836b29860e:HomePi_SmartRel_v1.3/wifi_tools.py
 
         self.startMQTTclient()
         utime.sleep(1)
@@ -110,11 +100,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
 
     def startMQTTclient(self):
         self.mqtt_client = MQTTClient(self.mqtt_client_id, self.server, self.qos, user=self.user,
-<<<<<<< HEAD:HomePi_SmartRel_v1.4/wifi_tools.py
                                       password=self.password, keepalive=self.keep_alive_interval)
-=======
-                                      password=self.password)  # , keepalive=60)
->>>>>>> a8396fe98527310ac9883a7417f5ab836b29860e:HomePi_SmartRel_v1.3/wifi_tools.py
         self.mqtt_client.set_callback(self.on_message)
         self.mqtt_client.set_last_will(topic=self.avail_topic, msg="offline", retain=True)
 
@@ -142,45 +128,6 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
             self.notify_error("fail to publish to broker")
 
     def on_message(self, topic, msg):
-<<<<<<< HEAD:HomePi_SmartRel_v1.4/wifi_tools.py
-        def mqtt_commands(msg):
-            msgs = ['reset', 'up', 'down', 'status', 'off', 'info']
-<<<<<<< HEAD:HomePi_SmartRel_v1.4/wifi_tools.py
-            output1 = "Topic:[%s], Message: " % (topic.decode("UTF-8").strip())
-            if msg == msgs[0]:
-                self.pub(output1 + "[Reset CMD]")
-                # emergnecy()
-            elif msg.lower() == msgs[1]:
-                self.switch_up()
-                self.pub(output1 + "Remote CMD: [UP]")
-            elif msg.lower() == msgs[2]:
-                self.switch_down()
-                self.pub(output1 + "Remote CMD: [DOWN]")
-=======
-
-            if msg.lower() == msgs[1]:
-                self.switch_up()
-                self.pub("Switch CMD: [UP]")
-                self.mqtt_client.publish(topic=self.state_topic, payload="up", retain=True)
-            elif msg.lower() == msgs[2]:
-                self.switch_down()
-                self.pub("Switch CMD: [DOWN]")
-                self.mqtt_client.publish(topic=self.state_topic, payload="down", retain=True)
->>>>>>> a8396fe98527310ac9883a7417f5ab836b29860e:HomePi_SmartRel_v1.3/wifi_tools.py
-            elif msg.lower() == msgs[3]:
-                self.pub(output1 + "Status CMD: [%s,%s,%s,%s]" % (
-                    self.but_up_state(), self.rel_up_state(), self.but_down_state(), self.rel_down_state()))
-            elif msg.lower() == msgs[4]:
-                self.switch_off()
-                self.pub(output1 + "Remote CMD: [OFF]")
-            elif msg.lower() == msgs[5]:
-                p = '%d-%d-%d %d:%d:%d' % (
-                    self.boot_time[0], self.boot_time[1], self.boot_time[2], self.boot_time[3], self.boot_time[4],
-                    self.boot_time[5])
-                self.pub('Boot time: [%s], ip: [%s]' % (p, self.sta_if.ifconfig()[0]))
-
-=======
->>>>>>> HA_update1:modules/wifi_tools.py
         self.arrived_msg = msg.decode("UTF-8").strip()
         self.mqtt_commands(topic=topic, msg=self.arrived_msg)
 
