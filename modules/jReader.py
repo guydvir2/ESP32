@@ -41,6 +41,6 @@ class JSONconfig:
 
 if __name__ == "__main__":
     name = "kRoomWindow"
-    create_config_files = JSONconfig('config.json')
+    create_config_files = JSONconfig('config.froom')
     create_config_files.update_value("client_ID", name)
     create_config_files.update_value("client_topic", 'HomePi/Dvir/Windows/' + name)

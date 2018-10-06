@@ -24,7 +24,7 @@ class Connect2Wifi:
             #     self.sta_if.ifconfig((ip, "255.255.255.0", "192.168.2.1", "192.168.2.1"))  # static IP
             # while not self.sta_if.isconnected():
             #     pass
-            # utime.sleep(2)
+            utime.sleep(3)
         print('network config:', self.sta_if.ifconfig())
 
 
@@ -43,7 +43,7 @@ class ClockUpdate:
             rtc = machine.RTC()
 
             # daylight saving
-            if 9 >= utime.localtime()[1] >= 4:
+            if 10 >= utime.localtime()[1] >= 4:
                 daylight = 1
             else:
                 daylight = 0
@@ -70,7 +70,7 @@ class ClockUpdate:
 
 class MQTTCommander(Connect2Wifi, ClockUpdate):
     def __init__(self, server, client_id, device_topic, listen_topics, msg_topic=None, static_ip=None, qos=0, user=None,
-                 password=None):
+                 password=None, state_topic=None, avail_topic=None):
         self.server, self.mqtt_client_id = server, client_id
         self.user, self.password, self.qos = user, password, qos
 <<<<<<< HEAD:HomePi_SmartRel_v1.4/wifi_tools.py
@@ -80,6 +80,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.state_topic = "HomePi/Dvir/Windows/kRoomWindows/State"
 >>>>>>> a8396fe98527310ac9883a7417f5ab836b29860e:HomePi_SmartRel_v1.3/wifi_tools.py
         self.mqtt_client, self.arrived_msg = None, None
+        self.avail_topic, self.state_topic = avail_topic, state_topic
         self.last_buttons_state, self.last_ping_time = [], None
 
         self.boot_time = utime.localtime()
@@ -115,8 +116,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                                       password=self.password)  # , keepalive=60)
 >>>>>>> a8396fe98527310ac9883a7417f5ab836b29860e:HomePi_SmartRel_v1.3/wifi_tools.py
         self.mqtt_client.set_callback(self.on_message)
-        self.mqtt_client.set_last_will(topic=self.msg_topic,
-                                       msg=self.time_stamp() + ' [' + self.device_topic + ']' + ' died', retain=False)
+        self.mqtt_client.set_last_will(topic=self.avail_topic, msg="offline", retain=True)
 
         try:
             self.mqtt_client.connect()
@@ -124,6 +124,9 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
             for topic in self.listen_topics:
                 self.mqtt_client.subscribe(topic)
             self.last_ping_time = utime.ticks_ms()
+            # last will msg
+            self.mqtt_client.publish(self.avail_topic, "online", retain=True)
+            #
             return 1
         except OSError:
             self.notify_error("Error connecting MQTT broker")
@@ -139,6 +142,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
             self.notify_error("fail to publish to broker")
 
     def on_message(self, topic, msg):
+<<<<<<< HEAD:HomePi_SmartRel_v1.4/wifi_tools.py
         def mqtt_commands(msg):
             msgs = ['reset', 'up', 'down', 'status', 'off', 'info']
 <<<<<<< HEAD:HomePi_SmartRel_v1.4/wifi_tools.py
@@ -175,13 +179,14 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                     self.boot_time[5])
                 self.pub('Boot time: [%s], ip: [%s]' % (p, self.sta_if.ifconfig()[0]))
 
+=======
+>>>>>>> HA_update1:modules/wifi_tools.py
         self.arrived_msg = msg.decode("UTF-8").strip()
-        mqtt_commands(msg=self.arrived_msg)
+        self.mqtt_commands(topic=topic, msg=self.arrived_msg)
 
     def mqtt_wait_loop(self):
         fails_counter, off_timer, tot_disconnections = 0, 0, 0
-
-        self.last_buttons_state = [self.but_up_state(), self.but_down_state()]
+        self.last_buttons_state = self.hw_query()
 
         while True:
             # detect button press
@@ -227,16 +232,15 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                         # exiting emergency
             utime.sleep(self.t_SW)
 
-
     def check_switch_change(self):
-        current_buttons_state = [self.but_up_state(), self.but_down_state()]
+        current_buttons_state = self.hw_query()
         if self.last_buttons_state != current_buttons_state:
             # debounce
             utime.sleep(self.t_SW)
             # check again
-            if self.last_buttons_state != [self.but_up_state(), self.but_down_state()]:
-                self.button_switch()
-                self.last_buttons_state = [self.but_up_state(), self.but_down_state()]
+            if self.last_buttons_state != self.hw_query():
+                self.switch_by_button()
+                self.last_buttons_state = self.hw_query()
 
     @staticmethod
     def time_stamp():
