@@ -1,0 +1,17 @@
+{
+  "listen_topics": [
+    "HomePi/Dvir/Windows/All"
+  ],
+  "pin_out2": 12,
+  "server": "192.168.2.200",
+  "pin_out1": 14,
+  "out_topic": "HomePi/Dvir/Messages",
+  "pin_in2": 26,
+  "pin_in1": 27,
+  "client_topic": "HomePi/Dvir/Windows/fRoomWindow",
+  "static_ip": null,
+  "user": "guy",
+  "password": "kupelu9e",
+  "state_topic": "HomePi/Dvir/Windows/fRoomWindow/State",
+  "avail_topic": "HomePi/Dvir/Windows/fRoomWindow/Avail"
+}

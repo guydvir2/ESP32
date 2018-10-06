@@ -184,7 +184,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
 
 
 # ################### Program Starts Here ####################
-rev = '1.7'
+rev = '1.8'
 config_file = 'config.json'
 saved_data = jReader.JSONconfig('config.json')
 con_data = saved_data.data_from_file

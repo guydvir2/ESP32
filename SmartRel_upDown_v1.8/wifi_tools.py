@@ -43,7 +43,7 @@ class ClockUpdate:
             rtc = machine.RTC()
 
             # daylight saving
-            if 9 >= utime.localtime()[1] >= 4:
+            if 10 >= utime.localtime()[1] >= 4:
                 daylight = 1
             else:
                 daylight = 0

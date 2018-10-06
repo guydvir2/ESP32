@@ -129,30 +129,35 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
 
     def on_message(self, topic, msg):
         def mqtt_commands(msg):
-            print("got this msg:", msg)
             output1 = "Topic:[%s], Message: " % (topic.decode("UTF-8").strip())
+            func_int, num_int = -1, -1
+
             if 'on' in msg.lower() or 'off' in msg.lower():
-                func, num = msg.strip().split(',')[0], msg.strip().split(',')[1]
+                func, num = msg.split(',')[0].strip(), msg.split(',')[1].strip()
                 if func is 'on':
                     func_int = 0
                 elif func is "off":
                     func_int = 1
 
-                if int(num) <= len(self.output_hw) - 1:
-                    self.output_hw[int(num)].value(func_int)
+                if 0 <= int(num) <= len(self.output_hw) - 1:
+                    num_int = int(num)
+
+                    self.output_hw[num_int].value(func_int)
                     self.pub(output1 + "[Remote]: Switch [%s][%s]" % (num, func))
-                    self.mqtt_client.publish(self.state_topic, msg, retain=True)
-
-            elif msg.lower().strip() is "status":
-                self.pub(output1 + "[Remote]: Switches %s Buttons %s" % (
-                    str([device.value() for device in self.output_hw]),
-                    str([device.value() for device in self.input_hw])))
-
-            elif msg.lower().strip() == "info":
-                p = '%d-%d-%d %d:%d:%d' % (
-                    self.boot_time[0], self.boot_time[1], self.boot_time[2], self.boot_time[3], self.boot_time[4],
-                    self.boot_time[5])
-                self.pub('Boot time: [%s], ip: [%s]' % (p, self.sta_if.ifconfig()[0]))
+                    self.mqtt_client.publish(self.state_topic,
+                                             "%s" % str([[1, 0][device.value()] for device in self.output_hw]),
+                                             retain=True)
+            #
+            # elif msg.lower().strip() is "status":
+            #     self.pub(output1 + "[Remote]: Switches %s Buttons %s" % (
+            #         str([device.value() for device in self.output_hw]),
+            #         str([device.value() for device in self.input_hw])))
+            #
+            # elif msg.lower().strip() == "info":
+            #     p = '%d-%d-%d %d:%d:%d' % (
+            #         self.boot_time[0], self.boot_time[1], self.boot_time[2], self.boot_time[3], self.boot_time[4],
+            #         self.boot_time[5])
+            #     self.pub('Boot time: [%s], ip: [%s]' % (p, self.sta_if.ifconfig()[0]))
 
             elif msg.lower().strip() is "err_log":
                 log_list = self.xport_logfile()
