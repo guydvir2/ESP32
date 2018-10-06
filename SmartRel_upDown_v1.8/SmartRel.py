@@ -116,7 +116,6 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
         self.pin_down.value(1)
         utime.sleep(self.t_SW)
         self.pin_up.value(1)
-
     #
 
     # Define hardware state retrieval
@@ -147,7 +146,7 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
     #
 
     # Define Physical button operation
-    def button_switch(self):
+    def switch_by_button(self):
         # switch_up.
         if self.but_up_state() == 1 and self.rel_up_state() == 0:
             self.switch_up()
@@ -173,6 +172,9 @@ class DualRelaySwitcher(MQTTCommander, ErrorLog):
             except NameError:
                 print("OFF")
                 self.append_log("fail to publish to broker")
+
+    def hw_query(self):
+        return [self.but_up_state(), self.but_down_state()]
 
     def PBit(self):
         print("PowerOnBit started")

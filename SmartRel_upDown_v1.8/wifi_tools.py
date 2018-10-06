@@ -110,8 +110,9 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
             for topic in self.listen_topics:
                 self.mqtt_client.subscribe(topic)
             self.last_ping_time = utime.ticks_ms()
+            # last will msg
             self.mqtt_client.publish(self.avail_topic, "online", retain=True)
-
+            #
             return 1
         except OSError:
             self.notify_error("Error connecting MQTT broker")
@@ -157,8 +158,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
 
     def mqtt_wait_loop(self):
         fails_counter, off_timer, tot_disconnections = 0, 0, 0
-
-        self.last_buttons_state = [self.but_up_state(), self.but_down_state()]
+        self.last_buttons_state = self.hw_query()
 
         while True:
             # detect button press
@@ -204,15 +204,16 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                         # exiting emergency
             utime.sleep(self.t_SW)
 
+
     def check_switch_change(self):
-        current_buttons_state = [self.but_up_state(), self.but_down_state()]
+        current_buttons_state = self.hw_query()
         if self.last_buttons_state != current_buttons_state:
             # debounce
             utime.sleep(self.t_SW)
             # check again
-            if self.last_buttons_state != [self.but_up_state(), self.but_down_state()]:
-                self.button_switch()
-                self.last_buttons_state = [self.but_up_state(), self.but_down_state()]
+            if self.last_buttons_state != self.hw_query():
+                self.switch_by_button()
+                self.last_buttons_state = self.hw_query()
 
     @staticmethod
     def time_stamp():

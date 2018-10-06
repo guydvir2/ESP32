@@ -105,6 +105,9 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         for i, device in enumerate(self.output_hw):
             device.value(self.input_hw[i].value())
 
+    def hw_query(self):
+        return [device.value() for device in self.input_hw]
+
     def PBit(self):
         print("PowerOnBit started")
         for device in self.output_hw:
