@@ -8,10 +8,10 @@
   "out_topic": "HomePi/Dvir/Messages",
   "pin_in2": 4,
   "pin_in1": 5,
-  "client_topic": "HomePi/Dvir/Windows/kRoomWindow",
+  "client_topic": "HomePi/Dvir/Windows/win",
   "static_ip": null,
   "user": "guy",
   "password": "kupelu9e",
-  "state_topic": "HomePi/Dvir/Windows/kRoomWindow/State",
-  "avail_topic": "HomePi/Dvir/Windows/kRoomWindow/Avail"
+  "state_topic": "HomePi/Dvir/Windows/win/State",
+  "avail_topic": "HomePi/Dvir/Windows/win/Avail"
 }

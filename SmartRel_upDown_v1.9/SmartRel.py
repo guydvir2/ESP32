@@ -204,16 +204,19 @@ class UpDownRelaySwitcher(MQTTCommander, ErrorLog):
         self.switch_off()
 
 
-# ################### Program Starts Here ####################
-rev = '1.9'
-config_file = 'config.json'
-saved_data = jReader.JSONconfig('config.json')
-con_data = saved_data.data_from_file
-client_id = ubinascii.hexlify(machine.unique_id())
-# ############################################################
-SmartRelay = UpDownRelaySwitcher(pin_in1=con_data["pin_in1"], pin_in2=con_data["pin_in2"], pin_out1=con_data["pin_out1"],
-                               pin_out2=con_data["pin_out2"], server=con_data["server"],
-                               client_id=client_id, listen_topics=con_data["listen_topics"],
-                               msg_topic=con_data["out_topic"], static_ip=con_data["static_ip"], user=con_data["user"],
-                               device_topic=con_data["client_topic"], password=con_data["password"], rev=rev,
-                               state_topic=con_data["state_topic"], avail_topic=con_data["avail_topic"])
+if __name__ == "__main__":
+    # ################### Program Starts Here ####################
+    rev = '1.9'
+    config_file = 'config.json'
+    saved_data = jReader.JSONconfig('config.json')
+    con_data = saved_data.data_from_file
+    client_id = ubinascii.hexlify(machine.unique_id())
+    # ############################################################
+    SmartRelay = UpDownRelaySwitcher(pin_in1=con_data["pin_in1"], pin_in2=con_data["pin_in2"],
+                                     pin_out1=con_data["pin_out1"],
+                                     pin_out2=con_data["pin_out2"], server=con_data["server"],
+                                     client_id=client_id, listen_topics=con_data["listen_topics"],
+                                     msg_topic=con_data["out_topic"], static_ip=con_data["static_ip"],
+                                     user=con_data["user"],
+                                     device_topic=con_data["client_topic"], password=con_data["password"], rev=rev,
+                                     state_topic=con_data["state_topic"], avail_topic=con_data["avail_topic"])
