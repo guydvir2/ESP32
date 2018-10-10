@@ -86,6 +86,8 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         self.t_SW = 0.1
         self.input_hw = []
         self.output_hw = []
+        self.what_switch = 0
+
         for i, pin in enumerate(input_pins):
             self.input_hw.append(machine.Pin(pin, machine.Pin.IN, machine.Pin.PULL_UP))
             self.output_hw.append(machine.Pin(output_pins[i], machine.Pin.OUT, machine.Pin.PULL_UP, value=1))
@@ -103,6 +105,22 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
     def switch_by_button(self):
         for i, device in enumerate(self.output_hw):
             device.value(self.input_hw[i].value())
+
+    def switch_state(self, sw, state):
+        temp_list = [1, 0]
+        if len(self.output_hw[sw]):
+            # for 3 state switches :up, down, off
+            try:
+                if state == 0:
+                    [device.value(False) for device in self.output_hw]
+                else:
+                    if any(self.output_hw[sw]) and self.output_hw[sw][temp_list[state]].value() != state:
+                        [device.value(False) for device in self.output_hw[sw]]  # all off
+                        self.output_hw[sw][temp_list[state]].value(state)
+
+            # for 2 state switch: on, off
+            except TypeError:
+                self.output_hw[sw].value(state)
 
     def hw_query(self):
         return [device.value() for device in self.input_hw]
