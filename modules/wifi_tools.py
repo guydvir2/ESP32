@@ -81,7 +81,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.boot_time = utime.localtime()
 
         # ########### Time related Parameters ##################
-        clock_update_interval = 4  # [hours]
+        clock_update_interval = 2  # [hours]
         self.num_of_fails = 2  # reach broker
         self.minutes_in_emergency_mode = 1  # [min]
         self.keep_alive_interval = 60  # [sec]
@@ -133,11 +133,13 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
 
     def mqtt_wait_loop(self):
         fails_counter, off_timer, tot_disconnections = 0, 0, 0
-        self.last_buttons_state = self.hw_query()
+        self.last_buttons_state = self.buttons_state()
 
         while True:
             # detect button press
             self.check_switch_change()
+            #
+
             self.clock_update()
             self.ping_broker(keep_time=self.keep_alive_interval)
 
@@ -174,20 +176,20 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                             # accept button switch during this time
                             self.check_switch_change()
                             time_in_loop = (utime.ticks_ms() - start_timeout) / 1000 / 60
-                            utime.sleep(self.t_SW)
+                            utime.sleep(self.switching_delay)
                         fails_counter = 0
                         # exiting emergency
-            utime.sleep(self.t_SW)
+            utime.sleep(self.switching_delay)
 
     def check_switch_change(self):
-        current_buttons_state = self.hw_query()
+        current_buttons_state = self.buttons_state()
         if self.last_buttons_state != current_buttons_state:
             # debounce
-            utime.sleep(self.t_SW)
+            utime.sleep(self.switching_delay)
             # check again
-            if self.last_buttons_state != self.hw_query():
+            if self.last_buttons_state != self.buttons_state():
                 self.switch_by_button()
-                self.last_buttons_state = self.hw_query()
+                self.last_buttons_state = self.buttons_state()
 
     @staticmethod
     def time_stamp():
