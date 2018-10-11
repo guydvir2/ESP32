@@ -93,7 +93,12 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
             self.input_hw.append([])
             for m, pin in enumerate(switch):
                 self.input_hw[i].append(machine.Pin(pin, machine.Pin.IN, machine.Pin.PULL_UP))
-                self.output_hw[i].append(machine.Pin(output_pins[i][m], machine.Pin.OUT, machine.Pin.PULL_UP, value=1))
+                # change to signal!
+                self.output_hw[i].append(
+                    machine.Signal(machine.Pin(output_pins[i][m], machine.Pin.OUT, machine.Pin.PULL_UP, value=1),
+                                   invert=True))
+
+        print(self.output_hw, self.input_hw)
         # ####
 
         ErrorLog.__init__(self, log_filename='error.log')
@@ -103,7 +108,8 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         if server is not None and client_id is not None and device_topic is not None:
             MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
                                    msg_topic=msg_topic, state_topic=state_topic, avail_topic=avail_topic,
-                                   listen_topics=listen_topics, static_ip=static_ip, user=user, password=password)
+                                   listen_topics=listen_topics, static_ip=static_ip, user=user,
+                                   password=password)
         utime.sleep(1)
 
     # Manual Switching ####
@@ -111,58 +117,66 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         # detect INPUT change to trigger output change
         for i, switch in enumerate(self.input_hw):
             for m, pin in enumerate(switch):
-                if pin.value() != self.last_buttons_state[i][m]:
-                    self.switch_state(sw=i,state=pin.value())
+                # detect change from last register
+                # since pin.value is inverse to logic- i use == instead of != to start the switch
+                if pin.value() == self.last_buttons_state[i][m]:
+                    self.switch_state(sw=i, state=pin.value())
+
     # ###
 
     # Remote Switching ####
     def switch_state(self, sw, state):
         # state = 0 means on, state = 1 means off
         conv_list = [1, 0]
-
+        # for 3 state switches :up, down, off
         if type(self.output_hw[sw]) is list:
-            # for 3 state switches :up, down, off
             if state == 0:
                 self.set_sw_off(sw=sw)
-            else:
-                if any(self.output_hw[sw]) and self.output_hw[sw][conv_list[state]].value() != state:
-                    self.set_sw_off(sw=sw)
-                    self.output_hw[sw][conv_list[state]].value(state)
-                    print(conv_list[state])
+                utime.sleep(self.switching_delay)
+            else:  # up or down
+                if self.output_hw[sw][conv_list[state]].value() != state:  # verify that not already in position
+                    # other is on
+                    if self.output_hw[sw][conv_list[state] - 1].value() == 1:  # verify other(up or down ) is not on
+                        self.set_sw_off(sw=sw)
+                        utime.sleep(self.switching_delay)
+
+                    self.output_hw[sw][conv_list[state]].on()
 
         # for 2 state switch: on, off
         elif type(self.output_hw[sw]) is int:
-                self.output_hw[sw].value(state)
+            self.output_hw[sw].on()
 
     def set_sw_off(self, sw):
-        [device.value(True) for device in self.output_hw[sw]]
+        [device.off() for device in self.output_hw[sw]]
 
     def buttons_state(self):
         temp = []
+        conv_list = [1, 0]
+
         for i, switch in enumerate(self.input_hw):
             temp.append([])
             for m, pin in enumerate(switch):
-                temp[i].append(pin.value())
+                # changed due to signal
+                temp[i].append(conv_list[pin.value()])
         return temp
 
     def mqtt_commands(self, topic, msg):
-        output1 = "Topic:[%s], Message: " % (topic.decode("UTF-8").strip())
-        func_int, num_int = -1, -1
         sw, state = int(msg.split(',')[0].strip()), int(msg.split(',')[1].strip())
-
         self.switch_state(sw=sw, state=state)
+
+        output1 = "Topic:[%s], Message: Switch #%d -[%s]" % (topic.decode("UTF-8").strip(), sw, ["ON", "OFF"][state])
+        self.pub(output1)
+        print("sw:%d , state:%d" % (sw, state))
 
     def PBit(self):
         print("PowerOnBit started")
-        for i, device in enumerate(self.output_hw):
+        for i in range(len(self.output_hw)):
             self.switch_state(sw=i, state=0)
             utime.sleep(self.switching_delay * 4)
             self.switch_state(sw=i, state=1)
             utime.sleep(self.switching_delay * 4)
-            # self.switch_state(sw=1, state=1)
-            # utime.sleep(self.switching_delay * 4)
-            # self.switch_state(sw=1, state=0)
-            # utime.sleep(self.switching_delay * 4)
+            print(i)
+
 
 
 # ################### Program Starts Here ####################
