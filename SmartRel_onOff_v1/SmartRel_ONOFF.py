@@ -102,7 +102,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         # ####
 
         ErrorLog.__init__(self, log_filename='error.log')
-        # self.PBit()
+        self.PBit()
 
         # Class can be activated without MQTTcommander
         if server is not None and client_id is not None and device_topic is not None:
@@ -116,9 +116,18 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
     def switch_by_button(self):
         # detect INPUT change to trigger output change
         for i, switch in enumerate(self.input_hw):
+            # state=[0,0]
+            # state[switch.value()]=
+            if switch==[0,0]:
+                state = "off"
+            elif switch == [0,1]:
+                state = "down"
+            elif switch ==[1,0]:
+                state = "up"
+            self.switch_state(sw=i, state=state)
+
             for m, pin in enumerate(switch):
                 # detect change from last register
-                # since pin.value is inverse to logic- i use == instead of != to start the switch
                 if pin.value() == self.last_buttons_state[i][m]:
                     self.switch_state(sw=i, state=pin.value())
 
@@ -126,28 +135,35 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
 
     # Remote Switching ####
     def switch_state(self, sw, state):
-        # state = 0 means on, state = 1 means off
         conv_list = [1, 0]
-        # for 3 state switches :up, down, off
-        if type(self.output_hw[sw]) is list:
-            if state == 0:
-                self.set_sw_off(sw=sw)
-                utime.sleep(self.switching_delay)
-            else:  # up or down
-                if self.output_hw[sw][conv_list[state]].value() != state:  # verify that not already in position
-                    # other is on
-                    if self.output_hw[sw][conv_list[state] - 1].value() == 1:  # verify other(up or down ) is not on
+
+        if state == "off":
+            act_vector = [0, 0]
+        elif state == "up":
+            act_vector = [1, 0]
+        elif state == "down":
+            act_vector = [0, 1]
+        else:
+            act_vector = [0, 0]
+
+        if self.get_rel_state(sw=sw) != act_vector:
+            if type(self.output_hw[sw]) is list:
+                if state == "off":
+                    self.set_sw_off(sw=sw)
+                    utime.sleep(self.switching_delay)
+                    print("switch off")
+                else:
+                    if self.get_rel_state(sw=sw) != act_vector:
                         self.set_sw_off(sw=sw)
                         utime.sleep(self.switching_delay)
-
-                    self.output_hw[sw][conv_list[state]].on()
-
-        # for 2 state switch: on, off
-        elif type(self.output_hw[sw]) is int:
-            self.output_hw[sw].on()
+                        for i, pin in enumerate(self.output_hw[sw]):
+                            pin.value(act_vector[i])
 
     def set_sw_off(self, sw):
-        [device.off() for device in self.output_hw[sw]]
+        [pin.off() for pin in self.output_hw[sw]]
+
+    def get_rel_state(self, sw):
+        [pin.value() for pin in self.output_hw[sw]]
 
     def buttons_state(self):
         temp = []
@@ -171,12 +187,15 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
     def PBit(self):
         print("PowerOnBit started")
         for i in range(len(self.output_hw)):
-            self.switch_state(sw=i, state=0)
+            self.switch_state(sw=i, state="up")
             utime.sleep(self.switching_delay * 4)
-            self.switch_state(sw=i, state=1)
+            self.switch_state(sw=i, state="off")
             utime.sleep(self.switching_delay * 4)
-            print(i)
-
+            self.switch_state(sw=i, state="down")
+            utime.sleep(self.switching_delay * 4)
+            self.switch_state(sw=i, state="off")
+            utime.sleep(self.switching_delay * 4)
+            # print(i)
 
 
 # ################### Program Starts Here ####################
