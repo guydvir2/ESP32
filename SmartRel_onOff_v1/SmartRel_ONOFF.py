@@ -95,7 +95,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                 self.output_hw[i].append(machine.Pin(output_pins[i][m], machine.Pin.OUT, machine.Pin.PULL_UP, value=1))
 
         ErrorLog.__init__(self, log_filename='error.log')
-        self.PBit()
+        # self.PBit()
 
         # Class can be activated without MQTTcommander
         if server is not None and client_id is not None and device_topic is not None:
@@ -106,9 +106,8 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
 
     def switch_by_button(self):
         for i, switch in enumerate(self.output_hw):
-            for m, pin in switch:
-                print(m, pin)
-                # pin.value(self.input_hw[i][m].value())
+            for m, pin in enumerate(switch):
+                pin.value(self.input_hw[i][m].value())
 
     def switch_state(self, sw, state):
         temp_list = [1, 0]
@@ -121,6 +120,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                     if any(self.output_hw[sw]) and self.output_hw[sw][temp_list[state]].value() != state:
                         [device.value(False) for device in self.output_hw[sw]]  # all off
                         self.output_hw[sw][temp_list[state]].value(state)
+                        print(temp_list[state])
 
             # for 2 state switch: on, off
             except TypeError:
@@ -150,14 +150,14 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         #     elif func is "off":
         #         func_int = 1
 
-            # if 0 <= int(num) <= len(self.output_hw) - 1:
-            #     num_int = int(num)
-            #
-            #     self.output_hw[num_int].value(func_int)
-            #     self.pub(output1 + "[Remote]: Switch [%s][%s]" % (num, func))
-            #     self.mqtt_client.publish(self.state_topic,
-            #                              "%s" % str([[1, 0][device.value()] for device in self.output_hw]),
-            #                              retain=True)
+        # if 0 <= int(num) <= len(self.output_hw) - 1:
+        #     num_int = int(num)
+        #
+        #     self.output_hw[num_int].value(func_int)
+        #     self.pub(output1 + "[Remote]: Switch [%s][%s]" % (num, func))
+        #     self.mqtt_client.publish(self.state_topic,
+        #                              "%s" % str([[1, 0][device.value()] for device in self.output_hw]),
+        #                              retain=True)
         #
         # elif msg.lower().strip() is "status":
         #     self.pub(output1 + "[Remote]: Switches %s Buttons %s" % (
@@ -188,7 +188,6 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
             # utime.sleep(self.t_SW * 4)
             # self.switch_state(sw=1, state=0)
             # utime.sleep(self.t_SW * 4)
-
 
 
 # ################### Program Starts Here ####################
