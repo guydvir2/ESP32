@@ -251,6 +251,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                 utime.sleep(self.switching_delay * 4)
                 self.switch_state(sw=i, state="down")
                 utime.sleep(self.switching_delay * 4)
+                self.switch_state(sw=i, state="off")
             else:
                 self.switch_state(sw=i, state="on")
                 utime.sleep(self.switching_delay * 4)

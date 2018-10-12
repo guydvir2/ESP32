@@ -1,4 +1,0 @@
-{"listen_topics": ["HomePi/Dvir/Windows/pRoomWindow", "HomePi/Dvir/Windows/All"],
-  "pin_out2": 16, "server": "192.168.2.200", "pin_out1": 17, "out_topic": "HomePi/Dvir/Messages",
-  "pin_in2": 21, "client_ID": "pRoom_ESP32", "pin_in1": 22,
-  "client_topic": "HomePi/Dvir/Windows/pRoomWindow", "static_ip": null,"user":"guy","password":"kupelu9e"}

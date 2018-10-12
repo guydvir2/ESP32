@@ -3,19 +3,23 @@
     "HomePi/Dvir/All"
   ],
   "input_pins": [
-    [0,
-    2]
+    [
+      12,
+      14
+    ]
   ],
   "server": "192.168.2.200",
   "out_topic": "HomePi/Dvir/Messages",
   "output_pins": [
-    [4,
-    5]
+    [
+      13,
+      9
+    ]
   ],
-  "client_topic": "HomePi/Dvir/Windows/ParentsRoom",
+  "client_topic": "HomePi/Dvir/Windows/Garden",
   "static_ip": null,
   "user": "guy",
   "password": "kupelu9e",
-  "state_topic": "HomePi/Dvir/Windows/ParentsRoom/State",
-  "avail_topic": "HomePi/Dvir/Windows/ParentsRoom/Avail"
+  "state_topic": "HomePi/Dvir/Windows/Garden/State",
+  "avail_topic": "HomePi/Dvir/Windows/Garden/Avail"
 }
