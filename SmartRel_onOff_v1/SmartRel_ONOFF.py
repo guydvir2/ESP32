@@ -89,7 +89,9 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
 
         # Init GPIO setup ###
         if type(input_pins[0]) is list:
+            state_topic_temp = []
             for i, switch in enumerate(input_pins):
+                state_topic_temp.append(state_topic + '_%d' % i)
                 self.output_hw.append([])
                 self.input_hw.append([])
 
@@ -99,12 +101,12 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                         machine.Signal(machine.Pin(output_pins[i][m], machine.Pin.OUT, machine.Pin.PULL_UP, value=1),
                                        invert=True))
         else:
+            state_topic_temp = state_topic
             for i, pin in enumerate(output_pins):
                 self.input_hw.append(machine.Pin(input_pins[i], machine.Pin.IN, machine.Pin.PULL_UP))
                 self.output_hw.append(
                     machine.Signal(machine.Pin(pin, machine.Pin.OUT, machine.Pin.PULL_UP, value=1),
                                    invert=True))
-
         # ####
 
         ErrorLog.__init__(self, log_filename='error.log')
@@ -113,7 +115,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         # Class can be activated without MQTTcommander
         if server is not None and client_id is not None and device_topic is not None:
             MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
-                                   msg_topic=msg_topic, state_topic=state_topic, avail_topic=avail_topic,
+                                   msg_topic=msg_topic, state_topic=state_topic_temp, avail_topic=avail_topic,
                                    listen_topics=listen_topics, static_ip=static_ip, user=user,
                                    password=password)
         utime.sleep(1)
@@ -166,7 +168,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                             for i, pin in enumerate(self.output_hw[sw]):
                                 pin.value(act_vector[i])
                             try:
-                                self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, state), retain=True)
+                                self.mqtt_client.publish(self.state_topic[sw], "%d,%s" % (sw, state), retain=True)
                             except AttributeError:
                                 print("Fail to publish")
 
@@ -174,7 +176,10 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         else:
             if state == "on":
                 self.output_hw[sw].on()
-                self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, state), retain=True)
+                try:
+                    self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, state), retain=True)
+                except AttributeError:
+                    print("Fail to publish")
             elif state == "off":
                 self.output_hw[sw].off()
                 try:
@@ -186,10 +191,13 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         try:
             # case of UP/Down switch
             [pin.off() for pin in self.output_hw[sw]]
+            try:
+                self.mqtt_client.publish(self.state_topic[sw], "%d,%s" % (sw, "off"), retain=True)
+            except AttributeError:
+                print("Fail to publish")
         except TypeError:
             # case of ON/OFF switch
             [pin.off() for pin in self.output_hw]
-        finally:
             try:
                 self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, "off"), retain=True)
             except AttributeError:

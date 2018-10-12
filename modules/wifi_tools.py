@@ -75,7 +75,8 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.user, self.password, self.qos = user, password, qos
         self.listen_topics, self.msg_topic, self.device_topic = listen_topics, msg_topic, device_topic
         self.mqtt_client, self.arrived_msg = None, None
-        self.avail_topic, self.state_topic = avail_topic, state_topic
+        self.avail_topic = avail_topic
+        self.state_topic = state_topic
         self.last_buttons_state, self.last_ping_time = [], None
 
         self.boot_time = utime.localtime()
