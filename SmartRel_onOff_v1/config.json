@@ -3,18 +3,14 @@
     "HomePi/Dvir/All"
   ],
   "input_pins": [
-    [
-      0,
-      2
-    ]
+    [0,
+    2]
   ],
   "server": "192.168.2.200",
   "out_topic": "HomePi/Dvir/Messages",
   "output_pins": [
-    [
-      4,
-      5
-    ]
+    [4,
+    5]
   ],
   "client_topic": "HomePi/Dvir/WateringSystem",
   "static_ip": null,
