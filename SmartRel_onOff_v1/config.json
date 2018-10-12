@@ -3,19 +3,31 @@
     "HomePi/Dvir/All"
   ],
   "input_pins": [
-    [0,
-    2]
+    [
+      0,
+      2
+    ],
+    [
+      13,
+      15
+    ]
   ],
   "server": "192.168.2.200",
   "out_topic": "HomePi/Dvir/Messages",
   "output_pins": [
-    [4,
-    5]
+    [
+      4,
+      5
+    ],
+    [
+      12,
+      14
+    ]
   ],
-  "client_topic": "HomePi/Dvir/WateringSystem",
+  "client_topic": "HomePi/Dvir/Windows/DualSaloon",
   "static_ip": null,
   "user": "guy",
   "password": "kupelu9e",
-  "state_topic": "HomePi/Dvir/WateringSystem/State",
-  "avail_topic": "HomePi/Dvir/WateringSystem/Avail"
+  "state_topic": "HomePi/Dvir/Windows/DualSaloon/State",
+  "avail_topic": "HomePi/Dvir/Windows/DualSaloon/Avail"
 }

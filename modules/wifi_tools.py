@@ -95,7 +95,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.startMQTTclient()
         utime.sleep(1)
 
-        self.pub('Boot- connected to broker: [%s], device ip: [%s]' % (server, self.sta_if.ifconfig()[0]))
+        self.pub('Boot- broker: [%s], ip: [%s]' % (server, self.sta_if.ifconfig()[0]))
         self.mqtt_wait_loop()
 
     def startMQTTclient(self):
