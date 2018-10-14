@@ -84,8 +84,11 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                  avail_topic=None):
 
         self.switching_delay = 0.1
-        self.input_hw = []
-        self.output_hw = []
+        self.rev = rev
+        self.boot_time = utime.localtime()
+        self.system_states = {"on": 1, "off": 0, "up": [1, 0], "down": [0, 1], "stop": [0, 0]}
+
+        self.input_hw, self.output_hw = [], []
 
         # Init GPIO setup ###
         if type(input_pins[0]) is list:
@@ -110,8 +113,6 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         # ####
 
         ErrorLog.__init__(self, log_filename='error.log')
-        self.PBit()
-
         # Class can be activated without MQTTcommander
         if server is not None and client_id is not None and device_topic is not None:
             MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
@@ -120,96 +121,72 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                                    password=password)
         utime.sleep(1)
 
+        # maybe-PBit is causing code failure when using more than 2 relays
+        # 1) disable PB ( less prefered)
+        # 2) puting more time spaces
+        # self.PBit()
+
     # Manual Switching ####
     def switch_by_button(self):
         # detect INPUT change to trigger output change
-        for i, switch in enumerate(self.buttons_state()):
-            if self.last_buttons_state[i] != switch:
-                if type(switch) is list:
-                    if switch == [0, 0]:
-                        state = "off"
-                    elif switch == [0, 1]:
-                        state = "down"
-                    elif switch == [1, 0]:
-                        state = "up"
-                else:
-                    if switch == 0:
-                        state = "off"
-                    elif switch == 1:
-                        state = "on"
-                self.switch_state(sw=i, state=state)
-                output1 = "Button CMD: Switch [#%d,%s]" % (i, state.upper())
-                self.pub(output1)
+        for i, but_state in enumerate(self.get_buttons_state()):
+            self.switch_state(sw=i, state=but_state)
+            utime.sleep(self.switching_delay)
+            output1 = "Button CMD: Switch [#%d,%s]" % (i, str(but_state))
+            self.pub(output1)
 
     # ###
 
     # Remote Switching ####
     def switch_state(self, sw, state):
         # case of UP/Down Switch
-        if type(self.input_hw[sw]) is list:
-            if state == "off":
-                act_vector = [0, 0]
-            elif state == "up":
-                act_vector = [1, 0]
-            elif state == "down":
-                act_vector = [0, 1]
-            else:
-                act_vector = [0, 0]
-
-            if self.get_rel_state(sw=sw) != act_vector:
-                if type(self.output_hw[sw]) is list:
-                    if state == "off":
-                        self.set_sw_off(sw=sw)
+        if type(self.input_hw[sw]) is list and type(self.output_hw[sw]) is list and self.get_rel_state(sw=sw) != state:
+            if state in list(self.system_states.values()):
+                self.set_sw_off(sw=sw)
+                utime.sleep(self.switching_delay)
+                if state != [0, 0]:
+                    for i, pin in enumerate(self.output_hw[sw]):
+                        pin.value(state[i])
                         utime.sleep(self.switching_delay)
-                    else:
-                        if self.get_rel_state(sw=sw) != act_vector:
-                            self.set_sw_off(sw=sw)
-                            utime.sleep(self.switching_delay)
-                            for i, pin in enumerate(self.output_hw[sw]):
-                                pin.value(act_vector[i])
-                            try:
-                                self.mqtt_client.publish(self.state_topic[sw], "%d,%s" % (sw, state), retain=True)
-                            except AttributeError:
-                                print("Fail to publish")
+                    try:
+                        self.mqtt_client.publish(self.state_topic[sw],
+                                                 "%d,%s" % (sw, str(self.get_key(state))), retain=True)
+                    except AttributeError:
+                        print("Fail to publish")
 
         # case of on/off switch
-        else:
-            if state == "on":
-                self.output_hw[sw].on()
-                try:
-                    self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, state), retain=True)
-                except AttributeError:
-                    print("Fail to publish")
-            elif state == "off":
-                self.output_hw[sw].off()
-                try:
-                    self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, state), retain=True)
-                except AttributeError:
-                    print("Fail to publish")
+        elif type(self.input_hw[sw]) is not list and type(self.output_hw[sw]) is not list and self.get_rel_state(
+                sw=sw) != state:
+            self.output_hw[sw].value(state)
+            try:
+                self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, str(self.get_key(state))), retain=True)
+            except AttributeError:
+                print("Fail to publish")
 
     def set_sw_off(self, sw):
-        try:
-            # case of UP/Down switch
+        if type(self.output_hw[sw]) is list:
+            # case of UP/DOWN switch
             [pin.off() for pin in self.output_hw[sw]]
-            try:
-                self.mqtt_client.publish(self.state_topic[sw], "%d,%s" % (sw, "off"), retain=True)
-            except AttributeError:
-                print("Fail to publish")
-        except TypeError:
+        else:
             # case of ON/OFF switch
             [pin.off() for pin in self.output_hw]
-            try:
-                self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, "off"), retain=True)
-            except AttributeError:
-                print("Fail to publish")
+        #   fail to publish MQTT at boot time (mostly)
+        try:
+            self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, "off"), retain=True)
+        except AttributeError:
+            print("Fail to publish")
 
     def get_rel_state(self, sw):
-        try:
+        if type(self.output_hw[sw]) is list:
             return [pin.value() for pin in self.output_hw[sw]]
-        except TypeError:
+        else:
             return [pin.value() for pin in self.output_hw]
+        # try:
+        #     return [pin.value() for pin in self.output_hw[sw]]
+        # except TypeError:
+        #     return [pin.value() for pin in self.output_hw]
 
-    def buttons_state(self):
+    def get_buttons_state(self):
         temp = []
         conv_list = [1, 0]
 
@@ -224,12 +201,18 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                 temp.append(conv_list[switch.value()])
         return temp
 
+    def get_key(self, value):
+        return list(self.system_states.keys())[list(self.system_states.values().index(value))]
+
     def mqtt_commands(self, topic, msg):
-        # reserved_words = ["status", "up", "down", "off", "on"]
         if msg.lower() == "status":
-            output1 = "Topic:[%s], Status: Switches %s, Relays %s" % (
-                topic.decode("UTF-8").strip(), str(self.buttons_state()),
+            output1 = "Topic:[%s], Status_1: Switches %s, Relays %s" % (
+                topic.decode("UTF-8").strip(), str(self.get_buttons_state()),
                 str([self.get_rel_state(sw=i) for i in range(len(self.output_hw))]))
+            self.pub(output1)
+
+            output1 = "Topic:[%s], Status_2: boot_time %s, rev %s" % (
+                topic.decode("UTF-8").strip(), str(self.boot_time), self.rev)
             self.pub(output1)
         else:
             try:
@@ -248,15 +231,16 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         for i, switch in enumerate(self.output_hw):
             if type(switch) is list:
                 self.switch_state(sw=i, state="up")
-                utime.sleep(self.switching_delay * 4)
+                utime.sleep(self.switching_delay * 8)
                 self.switch_state(sw=i, state="down")
-                utime.sleep(self.switching_delay * 4)
+                utime.sleep(self.switching_delay * 8)
                 self.switch_state(sw=i, state="off")
+                utime.sleep(self.switching_delay * 8)
             else:
                 self.switch_state(sw=i, state="on")
-                utime.sleep(self.switching_delay * 4)
+                utime.sleep(self.switching_delay * 8)
                 self.switch_state(sw=i, state="off")
-                utime.sleep(self.switching_delay * 4)
+                utime.sleep(self.switching_delay * 8)
 
 
 # ################### Program Starts Here ####################
