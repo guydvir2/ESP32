@@ -4,8 +4,12 @@
   ],
   "input_pins": [
     [
-      12,
-      14
+      26,
+      27
+    ],
+    [
+      25,
+      33
     ]
   ],
   "server": "192.168.2.200",
@@ -14,12 +18,16 @@
     [
       13,
       9
+    ],
+    [
+      12,
+      14
     ]
   ],
-  "client_topic": "HomePi/Dvir/Windows/Garden",
+  "client_topic": "HomePi/Dvir/Windows/Saloon2",
   "static_ip": null,
   "user": "guy",
   "password": "kupelu9e",
-  "state_topic": "HomePi/Dvir/Windows/Garden/State",
-  "avail_topic": "HomePi/Dvir/Windows/Garden/Avail"
+  "state_topic": "HomePi/Dvir/Windows/Saloon2/State",
+  "avail_topic": "HomePi/Dvir/Windows/Saloon2/Avail"
 }

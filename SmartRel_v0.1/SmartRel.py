@@ -110,7 +110,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         # ####
 
         ErrorLog.__init__(self, log_filename='error.log')
-        self.PBit()
+        # self.PBit()
 
         # Class can be activated without MQTTcommander
         if server is not None and client_id is not None and device_topic is not None:
