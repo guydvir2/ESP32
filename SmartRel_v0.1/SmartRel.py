@@ -83,12 +83,11 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                  device_topic=None, static_ip=None, user=None, password=None, rev=None, state_topic=None,
                  avail_topic=None):
 
+        self.input_hw, self.output_hw = [], []
         self.switching_delay = 0.1
         self.rev = rev
         self.boot_time = utime.localtime()
         self.system_states = {"on": 1, "off": 0, "up": [1, 0], "down": [0, 1], "stop": [0, 0]}
-
-        self.input_hw, self.output_hw = [], []
 
         # Init GPIO setup ###
         if type(input_pins[0]) is list:
@@ -132,7 +131,6 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
             utime.sleep(self.switching_delay)
             output1 = "Button CMD: Switch [#%d,%s]" % (i, str(but_state))
             self.pub(output1)
-
     # ###
 
     # Remote Switching ####
@@ -213,8 +211,14 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         return temp
 
     def get_key(self, value):
-        a= list(self.system_states.keys())[list(self.system_states.values().index(value))]
-        print(a)
+        try:
+            a = list(self.system_states.keys())[list(self.system_states.values()).index(value)]
+        except ValueError:
+            a = None
+        return a
+        # a= list(self.system_states.keys())[list(self.system_states.values().index(value))]
+        # list(system_states.keys())[list(system_states.values()).index(value)]
+        # print(a)
 
     def mqtt_commands(self, topic, msg):
         if msg.lower() == "status":
