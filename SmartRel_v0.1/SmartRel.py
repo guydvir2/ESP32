@@ -111,27 +111,25 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                     machine.Signal(machine.Pin(pin, machine.Pin.OUT, machine.Pin.PULL_UP, value=1),
                                    invert=True))
         # ####
-
         ErrorLog.__init__(self, log_filename='error.log')
         self.PBit()
 
-        # Class can be activated without MQTTcommander
-        if server is not None and client_id is not None and device_topic is not None:
-            MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
-                                   msg_topic=msg_topic, state_topic=state_topic_temp, avail_topic=avail_topic,
-                                   listen_topics=listen_topics, static_ip=static_ip, user=user,
-                                   password=password)
+        # if server is not None and client_id is not None and device_topic is not None:
+        MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
+                               msg_topic=msg_topic, state_topic=state_topic_temp, avail_topic=avail_topic,
+                               listen_topics=listen_topics, static_ip=static_ip, user=user,
+                               password=password)
         utime.sleep(1)
-
 
     # Manual Switching ####
     def switch_by_button(self):
         # detect INPUT change to trigger output change
         for i, but_state in enumerate(self.get_buttons_state()):
-            self.switch_state(sw=i, state=but_state)
-            utime.sleep(self.switching_delay)
-            output1 = "Button CMD: Switch [#%d,%s]" % (i, str(but_state))
-            self.pub(output1)
+            if but_state != self.last_buttons_state[i]:
+                self.switch_state(sw=i, state=but_state)
+                utime.sleep(self.switching_delay)
+                output1 = "Button CMD: Switch [#%d,%s]" % (i, str(but_state))
+                self.pub(output1)
 
     # ###
 
@@ -141,7 +139,6 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
             state = self.system_states[state]
             # print(state)
         elif state in list(self.system_states.values()):
-            # print(state)
             pass
         else:
             print("bad_value")
@@ -156,8 +153,8 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                         pin.value(state[i])
                         utime.sleep(self.switching_delay)
                     try:
-                        self.mqtt_client.publish(self.state_topic[sw],
-                                                 "%d,%s" % (sw, "gjghjg"), retain=True)
+                        self.mqtt_client.publish(self.state_topic[sw], "%d,%s" % (sw, self.get_key(value=state)),
+                                                 retain=True)
                     except AttributeError:
                         print("Fail to publish1")
 
@@ -166,7 +163,8 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                 sw=sw) != state:
             self.output_hw[sw].value(state)
             try:
-                self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, str(self.get_key(state))), retain=True)
+                self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, self.get_key(value=state)), retain=True)
+
             except AttributeError:
                 print("Fail to publish3")
 
@@ -213,18 +211,19 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         return temp
 
     def get_key(self, value):
-        a= list(self.system_states.keys())[list(self.system_states.values().index(value))]
-        print(a)
+        a = list(self.system_states.keys())[list(self.system_states.values()).index(value)]
+        return a
 
     def mqtt_commands(self, topic, msg):
         if msg.lower() == "status":
-            output1 = "Topic:[%s], Status_1: Switches %s, Relays %s" % (
+            output1 = "Topic:[%s], Status: Switches %s, Relays %s" % (
                 topic.decode("UTF-8").strip(), str(self.get_buttons_state()),
-                str([self.get_rel_state(sw=i) for i in range(len(self.output_hw))]))
+                str([self.get_rel_state(sw=i) for i in range(len(self.output_hw) - 1)]))
             self.pub(output1)
-
-            output1 = "Topic:[%s], Status_2: boot_time %s, rev %s" % (
-                topic.decode("UTF-8").strip(), str(self.boot_time), self.rev)
+        elif msg.lower() == "info":
+            t = self.time_stamp(time_tup=self.boot_time)
+            output1 = "Topic:[%s], Status_2: boot %s, rev [%s]" % (
+                topic.decode("UTF-8").strip(), t, self.rev)
             self.pub(output1)
         else:
             try:

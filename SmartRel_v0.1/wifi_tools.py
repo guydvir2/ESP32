@@ -192,9 +192,12 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                 self.switch_by_button()
                 self.last_buttons_state = self.get_buttons_state()
 
-    @staticmethod
-    def time_stamp():
-        t_tup = utime.localtime()
+    # @staticmethod
+    def time_stamp(self, time_tup=None):
+        if time_tup is None:
+            t_tup = utime.localtime()
+        else:
+            t_tup = time_tup
         t = "[%d-%02d-%02d %02d:%02d:%02d.%02d]" % (t_tup[0], t_tup[1], t_tup[2],
                                                     t_tup[3], t_tup[4], t_tup[5], t_tup[6])
         return t
