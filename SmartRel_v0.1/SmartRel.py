@@ -1,9 +1,10 @@
 from wifi_tools import *
-import utime
-import machine
-import os
+from utime import sleep, localtime
+from machine import Pin, Signal, unique_id
+from os import listdir, stat, getcwd, remove
+# import os
 import jReader
-import ubinascii
+from ubinascii import hexlify
 
 
 class ErrorLog:
@@ -15,7 +16,7 @@ class ErrorLog:
         self.output2screen = screen_output
 
         if log_filename is None:
-            self.err_log = os.getcwd() + 'HPi_err.log'
+            self.err_log = getcwd() + 'HPi_err.log'
         else:
             self.err_log = log_filename
 
@@ -23,13 +24,13 @@ class ErrorLog:
 
     def check_logfile_valid(self):
         # verify existance of log file
-        if self.err_log in os.listdir():
+        if self.err_log in listdir():
             self.valid_logfile = True
         # create new file
         else:
             open(self.err_log, 'a').close()
 
-            if self.err_log in os.listdir():
+            if self.err_log in listdir():
                 self.valid_logfile = True
 
             if self.valid_logfile is True:
@@ -62,15 +63,15 @@ class ErrorLog:
         if self.output2screen == 1:
             print(self.msg)
 
-        # if os.stat(self.err_log)[6] > 1000:
+        # if stat(self.err_log)[6] > 1000:
         #     self.pub("error_log file exceeds its allowed size")
-        # if os.stat(self.err_log)[6] > 5000:
+        # if stat(self.err_log)[6] > 5000:
         #     self.pub("error_log file deleted")
         #     os.remove(self.err_log)
 
     def xport_logfile(self):
-        # return os.listdir()
-        if self.err_log in os.listdir() is True:
+        # return listdir()
+        if self.err_log in listdir() is True:
             with open(self.err_log, 'r') as f:
                 return f.readlines()
         else:
@@ -85,7 +86,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
 
         self.switching_delay = 0.1
         self.rev = rev
-        self.boot_time = utime.localtime()
+        self.boot_time = localtime()
         self.system_states = {"on": 1, "off": 0, "up": [1, 0], "down": [0, 1], "stop": [0, 0]}
 
         self.input_hw, self.output_hw = [], []
@@ -99,27 +100,25 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                 self.input_hw.append([])
 
                 for m, pin in enumerate(switch):
-                    self.input_hw[i].append(machine.Pin(pin, machine.Pin.IN, machine.Pin.PULL_UP))
+                    self.input_hw[i].append(Pin(pin, Pin.IN, Pin.PULL_UP))
                     self.output_hw[i].append(
-                        machine.Signal(machine.Pin(output_pins[i][m], machine.Pin.OUT, machine.Pin.PULL_UP, value=1),
-                                       invert=True))
+                        Signal(Pin(output_pins[i][m], Pin.OUT, Pin.PULL_UP, value=1),
+                               invert=True))
         else:
             state_topic_temp = state_topic
             for i, pin in enumerate(output_pins):
-                self.input_hw.append(machine.Pin(input_pins[i], machine.Pin.IN, machine.Pin.PULL_UP))
+                self.input_hw.append(Pin(input_pins[i], Pin.IN, Pin.PULL_UP))
                 self.output_hw.append(
-                    machine.Signal(machine.Pin(pin, machine.Pin.OUT, machine.Pin.PULL_UP, value=1),
-                                   invert=True))
+                    Signal(Pin(pin, Pin.OUT, Pin.PULL_UP, value=1),
+                           invert=True))
         # ####
-        ErrorLog.__init__(self, log_filename='error.log')
         self.PBit()
-
-        # if server is not None and client_id is not None and device_topic is not None:
+        ErrorLog.__init__(self, log_filename='error.log')
         MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
                                msg_topic=msg_topic, state_topic=state_topic_temp, avail_topic=avail_topic,
                                listen_topics=listen_topics, static_ip=static_ip, user=user,
                                password=password)
-        utime.sleep(1)
+        # sleep(1)
 
     # Manual Switching ####
     def switch_by_button(self):
@@ -127,7 +126,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         for i, but_state in enumerate(self.get_buttons_state()):
             if but_state != self.last_buttons_state[i]:
                 self.switch_state(sw=i, state=but_state)
-                utime.sleep(self.switching_delay)
+                sleep(self.switching_delay)
                 output1 = "Button CMD: Switch [#%d,%s]" % (i, str(but_state))
                 self.pub(output1)
 
@@ -137,7 +136,6 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
     def switch_state(self, sw, state):
         if state in list(self.system_states.keys()):
             state = self.system_states[state]
-            # print(state)
         elif state in list(self.system_states.values()):
             pass
         else:
@@ -147,11 +145,11 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         if type(self.input_hw[sw]) is list and type(self.output_hw[sw]) is list and self.get_rel_state(sw=sw) != state:
             if state in list(self.system_states.values()):
                 self.set_sw_off(sw=sw)
-                utime.sleep(self.switching_delay)
+                sleep(self.switching_delay)
                 if state != [0, 0]:
                     for i, pin in enumerate(self.output_hw[sw]):
                         pin.value(state[i])
-                        utime.sleep(self.switching_delay)
+                        sleep(self.switching_delay)
                     try:
                         self.mqtt_client.publish(self.state_topic[sw], "%d,%s" % (sw, self.get_key(value=state)),
                                                  retain=True)
@@ -185,15 +183,12 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         except AttributeError:
             print("Fail to publish4")
 
-    def get_rel_state(self, sw):
-        if type(self.output_hw[sw]) is list:
-            return [pin.value() for pin in self.output_hw[sw]]
+    def get_rel_state(self, sw=None):
+        if sw is not None:
+            if type(self.output_hw[sw]) is list:
+                return [pin.value() for pin in self.output_hw[sw]]
         else:
             return [pin.value() for pin in self.output_hw]
-        # try:
-        #     return [pin.value() for pin in self.output_hw[sw]]
-        # except TypeError:
-        #     return [pin.value() for pin in self.output_hw]
 
     def get_buttons_state(self):
         temp = []
@@ -211,20 +206,21 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         return temp
 
     def get_key(self, value):
-        a = list(self.system_states.keys())[list(self.system_states.values()).index(value)]
-        return a
+        return list(self.system_states.keys())[list(self.system_states.values()).index(value)]
 
     def mqtt_commands(self, topic, msg):
         if msg.lower() == "status":
             output1 = "Topic:[%s], Status: Switches %s, Relays %s" % (
                 topic.decode("UTF-8").strip(), str(self.get_buttons_state()),
-                str([self.get_rel_state(sw=i) for i in range(len(self.output_hw) - 1)]))
+                str([self.get_rel_state(i) for i in range(len(self.output_hw))]))
             self.pub(output1)
+
         elif msg.lower() == "info":
             t = self.time_stamp(time_tup=self.boot_time)
             output1 = "Topic:[%s], Status_2: boot %s, rev [%s]" % (
                 topic.decode("UTF-8").strip(), t, self.rev)
             self.pub(output1)
+
         else:
             try:
                 sw, state = int(msg.split(',')[0].strip()), msg.split(',')[1].strip()
@@ -243,18 +239,18 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
             if type(switch) is list:
                 # print(i,"up")
                 self.switch_state(sw=i, state="up")
-                utime.sleep(self.switching_delay * 8)
+                sleep(self.switching_delay * 8)
                 # print(i, "down")
                 self.switch_state(sw=i, state="down")
-                utime.sleep(self.switching_delay * 8)
+                sleep(self.switching_delay * 8)
                 # print(i, "stop")
                 self.switch_state(sw=i, state="stop")
-                utime.sleep(self.switching_delay * 8)
+                sleep(self.switching_delay * 8)
             else:
                 self.switch_state(sw=i, state="on")
-                utime.sleep(self.switching_delay * 8)
+                sleep(self.switching_delay * 8)
                 self.switch_state(sw=i, state="off")
-                utime.sleep(self.switching_delay * 8)
+                sleep(self.switching_delay * 8)
 
 
 # ################### Program Starts Here ####################
@@ -262,7 +258,7 @@ rev = '2.0'
 config_file = 'config.json'
 saved_data = jReader.JSONconfig('config.json')
 con_data = saved_data.data_from_file
-client_id = ubinascii.hexlify(machine.unique_id())
+client_id = hexlify(unique_id())
 # ############################################################
 
 SmartRelay = MultiRelaySwitcher(input_pins=con_data["input_pins"], output_pins=con_data["output_pins"],
