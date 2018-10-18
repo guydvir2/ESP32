@@ -1,86 +1,13 @@
-from wifi_tools import *
+from wifi_tools import MQTTCommander
 from utime import sleep, localtime
 from machine import Pin, Signal, unique_id
-from os import listdir, stat, getcwd, remove
-# import os
 import jReader
+from errlog import ErrorLog
 from ubinascii import hexlify
 
 
-class ErrorLog:
-    # log saved on ESP as a file
-    def __init__(self, log_filename=None, time_stamp=1, screen_output=1):
-
-        self.time_stamp_in_log = time_stamp
-        self.valid_logfile = False
-        self.output2screen = screen_output
-
-        if log_filename is None:
-            self.err_log = getcwd() + 'HPi_err.log'
-        else:
-            self.err_log = log_filename
-
-        self.check_logfile_valid()
-
-    def check_logfile_valid(self):
-        # verify existance of log file
-        if self.err_log in listdir():
-            self.valid_logfile = True
-        # create new file
-        else:
-            open(self.err_log, 'a').close()
-
-            if self.err_log in listdir():
-                self.valid_logfile = True
-
-            if self.valid_logfile is True:
-                msg = '>>Log file %s was created successfully' % self.err_log
-            else:
-                msg = '>>Log file %s failed to create' % self.err_log
-
-            self.append_log(msg, time_stamp=1)
-
-    def append_log(self, log_entry='', time_stamp=None):
-        # permanent time_stamp
-        if time_stamp is None:
-            if self.time_stamp_in_log == 1:
-                self.msg = '%s %s' % (self.time_stamp(), log_entry)
-            else:
-                self.msg = '%s' % log_entry
-        # ADHOC time_stamp - over-rides permanent one
-        elif time_stamp is 1:
-            self.msg = '%s %s' % (self.time_stamp(), log_entry)
-        elif time_stamp is 0:
-            self.msg = '%s' % log_entry
-
-        if self.valid_logfile is True:
-            myfile = open(self.err_log, 'a')
-            myfile.write(self.msg + '\n')
-            myfile.close()
-        else:
-            print('Log err')
-
-        if self.output2screen == 1:
-            print(self.msg)
-
-        # if stat(self.err_log)[6] > 1000:
-        #     self.pub("error_log file exceeds its allowed size")
-        # if stat(self.err_log)[6] > 5000:
-        #     self.pub("error_log file deleted")
-        #     os.remove(self.err_log)
-
-    def xport_logfile(self):
-        # return listdir()
-        if self.err_log in listdir() is True:
-            with open(self.err_log, 'r') as f:
-                return f.readlines()
-        else:
-            print('file', self.err_log, ' not found')
-            return 0
-
-
-class MultiRelaySwitcher(ErrorLog, MQTTCommander):
-    def __init__(self, input_pins, output_pins, server=None, client_id=None, listen_topics=None, msg_topic=None,
+class MultiRelaySwitcher(MQTTCommander, ErrorLog):
+    def __init__(self, server=None, client_id=None, listen_topics=None, msg_topic=None, sw_amount=None, sw_type=None,
                  device_topic=None, static_ip=None, user=None, password=None, rev=None, state_topic=None,
                  avail_topic=None):
 
@@ -90,35 +17,42 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         self.system_states = {"on": 1, "off": 0, "up": [1, 0], "down": [0, 1], "stop": [0, 0]}
 
         self.input_hw, self.output_hw = [], []
+        state_topic_temp = []
+        input_pins, output_pins = self.pins_selection(amount=sw_amount, sw_type=sw_type)
 
         # Init GPIO setup ###
-        if type(input_pins[0]) is list:
-            state_topic_temp = []
-            for i, switch in enumerate(input_pins):
+        for i, switch in enumerate(input_pins):
+            if type(switch) is list:
                 state_topic_temp.append(state_topic + '_%d' % i)
                 self.output_hw.append([])
                 self.input_hw.append([])
-
                 for m, pin in enumerate(switch):
                     self.input_hw[i].append(Pin(pin, Pin.IN, Pin.PULL_UP))
-                    self.output_hw[i].append(
-                        Signal(Pin(output_pins[i][m], Pin.OUT, Pin.PULL_UP, value=1),
-                               invert=True))
-        else:
-            state_topic_temp = state_topic
-            for i, pin in enumerate(output_pins):
-                self.input_hw.append(Pin(input_pins[i], Pin.IN, Pin.PULL_UP))
-                self.output_hw.append(
-                    Signal(Pin(pin, Pin.OUT, Pin.PULL_UP, value=1),
-                           invert=True))
-        # ####
+                    self.output_hw[i].append(Signal(Pin(output_pins[i][m], Pin.OUT, Pin.PULL_UP, value=1),
+                                                    invert=True))
+            else:
+                state_topic_temp = state_topic
+                self.input_hw.append(Pin(switch, Pin.IN, Pin.PULL_UP))
+                self.output_hw.append(Signal(Pin(switch, Pin.OUT, Pin.PULL_UP, value=1), invert=True))
+        #
         self.PBit()
+
         ErrorLog.__init__(self, log_filename='error.log')
         MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
                                msg_topic=msg_topic, state_topic=state_topic_temp, avail_topic=avail_topic,
                                listen_topics=listen_topics, static_ip=static_ip, user=user,
                                password=password)
-        # sleep(1)
+
+    @staticmethod
+    def pins_selection(amount=1, sw_type='sw'):
+        in_vector = [14, 12, 13, 15, 3, 1]
+        out_vector = [5, 4, 0, 2, 10, 9]
+        if sw_type is "sw" and amount <= len(in_vector):
+            return in_vector[:amount], out_vector[: amount]
+
+        elif sw_type is "tog" and amount <= len(in_vector) / 2:
+            return [[in_vector[2 * i], in_vector[2 * i + 1]] for i in range(amount)], \
+                   [[out_vector[2 * i], out_vector[2 * i + 1]] for i in range(amount)]
 
     # Manual Switching ####
     def switch_by_button(self):
@@ -129,7 +63,6 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                 sleep(self.switching_delay)
                 output1 = "Button CMD: Switch [#%d,%s]" % (i, str(but_state))
                 self.pub(output1)
-
     # ###
 
     # Remote Switching ####
@@ -151,7 +84,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                         pin.value(state[i])
                         sleep(self.switching_delay)
                     try:
-                        self.mqtt_client.publish(self.state_topic[sw], "%d,%s" % (sw, self.get_key(value=state)),
+                        self.mqtt_client.publish(self.state_topic[sw], "%d,%s" % (sw, self.translate_status(value=state)),
                                                  retain=True)
                     except AttributeError:
                         print("Fail to publish1")
@@ -161,10 +94,11 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                 sw=sw) != state:
             self.output_hw[sw].value(state)
             try:
-                self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, self.get_key(value=state)), retain=True)
+                self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, self.translate_status(value=state)), retain=True)
 
             except AttributeError:
                 print("Fail to publish3")
+    # ###
 
     def set_sw_off(self, sw):
         if type(self.output_hw[sw]) is list:
@@ -191,8 +125,7 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
             return [pin.value() for pin in self.output_hw]
 
     def get_buttons_state(self):
-        temp = []
-        conv_list = [1, 0]
+        conv_list, temp = [1, 0], []
 
         for i, switch in enumerate(self.input_hw):
             # case of UP/Down switch
@@ -205,19 +138,29 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
                 temp.append(conv_list[switch.value()])
         return temp
 
-    def get_key(self, value):
+    def translate_status(self, value):
         return list(self.system_states.keys())[list(self.system_states.values()).index(value)]
 
     def mqtt_commands(self, topic, msg):
         if msg.lower() == "status":
+            vv = []
+            for i, switch in enumerate(self.output_hw):
+                if type(switch) is list:
+                    v_temp = []
+                    for m, rel in enumerate(switch):
+                        v_temp.append(rel.value())
+                    vv.append(self.translate_status(v_temp))
+                else:
+                    vv.append(self.translate_status(value=switch.value()))
+            bs = self.get_buttons_state()
             output1 = "Topic:[%s], Status: Switches %s, Relays %s" % (
-                topic.decode("UTF-8").strip(), str(self.get_buttons_state()),
-                str([self.get_rel_state(i) for i in range(len(self.output_hw))]))
+                topic.decode("UTF-8").strip(), str([self.translate_status(value=state) for state in bs]),
+                str(vv))
             self.pub(output1)
 
         elif msg.lower() == "info":
             t = self.time_stamp(time_tup=self.boot_time)
-            output1 = "Topic:[%s], Status_2: boot %s, rev [%s]" % (
+            output1 = "Topic:[%s], Info: boot %s, rev [%s]" % (
                 topic.decode("UTF-8").strip(), t, self.rev)
             self.pub(output1)
 
@@ -237,13 +180,10 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
         print("PowerOnBit started")
         for i, switch in enumerate(self.output_hw):
             if type(switch) is list:
-                # print(i,"up")
                 self.switch_state(sw=i, state="up")
                 sleep(self.switching_delay * 8)
-                # print(i, "down")
                 self.switch_state(sw=i, state="down")
                 sleep(self.switching_delay * 8)
-                # print(i, "stop")
                 self.switch_state(sw=i, state="stop")
                 sleep(self.switching_delay * 8)
             else:
@@ -254,16 +194,16 @@ class MultiRelaySwitcher(ErrorLog, MQTTCommander):
 
 
 # ################### Program Starts Here ####################
-rev = '2.0'
+rev = '2.2'
 config_file = 'config.json'
 saved_data = jReader.JSONconfig('config.json')
 con_data = saved_data.data_from_file
 client_id = hexlify(unique_id())
+# sw_type can be : "sw" for momentary switch or "tog" for toggle switch
 # ############################################################
 
-SmartRelay = MultiRelaySwitcher(input_pins=con_data["input_pins"], output_pins=con_data["output_pins"],
-                                server=con_data["server"],
-                                client_id=client_id, listen_topics=con_data["listen_topics"],
+SmartRelay = MultiRelaySwitcher(server=con_data["server"], client_id=client_id, listen_topics=con_data["listen_topics"],
                                 msg_topic=con_data["out_topic"], static_ip=con_data["static_ip"], user=con_data["user"],
                                 device_topic=con_data["client_topic"], password=con_data["password"], rev=rev,
-                                state_topic=con_data["state_topic"], avail_topic=con_data["avail_topic"])
+                                state_topic=con_data["state_topic"], avail_topic=con_data["avail_topic"],
+                                sw_amount=con_data["sw_amount"], sw_type=con_data["sw_type"])

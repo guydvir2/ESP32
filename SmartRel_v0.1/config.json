@@ -1,17 +1,9 @@
 {
-  "listen_topics": [
-    "HomePi/Dvir/All"
-  ],
-  "input_pins": [
-      0,
-      2
-  ],
+  "listen_topics": ["HomePi/Dvir/All"],
+  "sw_amount":2,
+  "sw_type":"tog",
   "server": "192.168.2.200",
   "out_topic": "HomePi/Dvir/Messages",
-  "output_pins": [
-      4,
-      5
-  ],
   "client_topic": "HomePi/Dvir/Windows/LaundryRoom",
   "static_ip": null,
   "user": "guy",
