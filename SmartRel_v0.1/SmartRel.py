@@ -9,7 +9,7 @@ from ubinascii import hexlify
 class MultiRelaySwitcher(MQTTCommander, ErrorLog):
     def __init__(self, server=None, client_id=None, listen_topics=None, msg_topic=None, sw_amount=None, sw_type=None,
                  device_topic=None, static_ip=None, user=None, password=None, rev=None, state_topic=None,
-                 avail_topic=None):
+                 avail_topic=None, port_type=None):
 
         self.switching_delay = 0.1
         self.rev = rev
@@ -18,7 +18,7 @@ class MultiRelaySwitcher(MQTTCommander, ErrorLog):
 
         self.input_hw, self.output_hw = [], []
         state_topic_temp = []
-        input_pins, output_pins = self.pins_selection(amount=sw_amount, sw_type=sw_type)
+        input_pins, output_pins = self.pins_selection(port_type=port_type, amount=sw_amount, sw_type=sw_type)
 
         # Init GPIO setup ###
         for i, switch in enumerate(input_pins):
@@ -38,15 +38,24 @@ class MultiRelaySwitcher(MQTTCommander, ErrorLog):
         self.PBit()
 
         ErrorLog.__init__(self, log_filename='error.log')
+        print("System parameters: port type: %s, "
+              "switch type: %s, switches amount: %d, MQTT: broker:%s, listen: %s device:%s" % (
+                  port_type, sw_type, sw_amount, server, str(listen_topics), str(device_topic)))
         MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
                                msg_topic=msg_topic, state_topic=state_topic_temp, avail_topic=avail_topic,
                                listen_topics=listen_topics, static_ip=static_ip, user=user,
                                password=password)
 
     @staticmethod
-    def pins_selection(amount=1, sw_type='sw'):
-        in_vector = [14, 12, 13, 15, 3, 1]
-        out_vector = [5, 4, 0, 2, 10, 9]
+    def pins_selection(port_type="esp8266", amount=1, sw_type='sw'):
+        if port_type == "esp32":
+            # currently only 1 pair available for esp8266
+            in_vector = [0, 2]  # , 14, 12]
+            out_vector = [5, 4]  # , 13, 15]
+        elif port_type == "esp8266":
+            in_vector = [22, 19, 23, 18]
+            out_vector = [5, 17, 16, 4]
+
         if sw_type is "sw" and amount <= len(in_vector):
             return in_vector[:amount], out_vector[: amount]
 
@@ -61,8 +70,10 @@ class MultiRelaySwitcher(MQTTCommander, ErrorLog):
             if but_state != self.last_buttons_state[i]:
                 self.switch_state(sw=i, state=but_state)
                 sleep(self.switching_delay)
-                output1 = "Button CMD: Switch [#%d,%s]" % (i, str(but_state))
+                print("but_state", i, but_state)
+                output1 = "Button CMD: Switch [#%d,%s]" % (i, str(self.translate_status(value=but_state)))
                 self.pub(output1)
+
     # ###
 
     # Remote Switching ####
@@ -72,7 +83,7 @@ class MultiRelaySwitcher(MQTTCommander, ErrorLog):
         elif state in list(self.system_states.values()):
             pass
         else:
-            print("bad_value")
+            print("illegal switch value- ", sw, state)
 
         # case of UP/Down Switch
         if type(self.input_hw[sw]) is list and type(self.output_hw[sw]) is list and self.get_rel_state(sw=sw) != state:
@@ -84,7 +95,8 @@ class MultiRelaySwitcher(MQTTCommander, ErrorLog):
                         pin.value(state[i])
                         sleep(self.switching_delay)
                     try:
-                        self.mqtt_client.publish(self.state_topic[sw], "%d,%s" % (sw, self.translate_status(value=state)),
+                        self.mqtt_client.publish(self.state_topic[sw],
+                                                 "%d,%s" % (sw, self.translate_status(value=state)),
                                                  retain=True)
                     except AttributeError:
                         print("Fail to publish1")
@@ -94,10 +106,12 @@ class MultiRelaySwitcher(MQTTCommander, ErrorLog):
                 sw=sw) != state:
             self.output_hw[sw].value(state)
             try:
-                self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, self.translate_status(value=state)), retain=True)
+                self.mqtt_client.publish(self.state_topic, "%d,%s" % (sw, self.translate_status(value=state)),
+                                         retain=True)
 
             except AttributeError:
                 print("Fail to publish3")
+
     # ###
 
     def set_sw_off(self, sw):
@@ -121,6 +135,8 @@ class MultiRelaySwitcher(MQTTCommander, ErrorLog):
         if sw is not None:
             if type(self.output_hw[sw]) is list:
                 return [pin.value() for pin in self.output_hw[sw]]
+            else:
+                return [self.output_hw[sw].value()]
         else:
             return [pin.value() for pin in self.output_hw]
 
@@ -139,23 +155,26 @@ class MultiRelaySwitcher(MQTTCommander, ErrorLog):
         return temp
 
     def translate_status(self, value):
-        return list(self.system_states.keys())[list(self.system_states.values()).index(value)]
+        # print(type(value),value)
+        if type(value) is list and len(value) == 1:
+            value = value[0]
+        try:
+            a = list(self.system_states.keys())[list(self.system_states.values()).index(value)]
+            return a
+        except ValueError:
+            return "state error"
 
     def mqtt_commands(self, topic, msg):
         if msg.lower() == "status":
             vv = []
             for i, switch in enumerate(self.output_hw):
-                if type(switch) is list:
-                    v_temp = []
-                    for m, rel in enumerate(switch):
-                        v_temp.append(rel.value())
-                    vv.append(self.translate_status(v_temp))
-                else:
-                    vv.append(self.translate_status(value=switch.value()))
+                vv.append(self.get_rel_state(sw=i))
             bs = self.get_buttons_state()
+            print(bs)
+
             output1 = "Topic:[%s], Status: Switches %s, Relays %s" % (
                 topic.decode("UTF-8").strip(), str([self.translate_status(value=state) for state in bs]),
-                str(vv))
+                str([self.translate_status(value=state) for state in vv]))
             self.pub(output1)
 
         elif msg.lower() == "info":
@@ -201,9 +220,9 @@ con_data = saved_data.data_from_file
 client_id = hexlify(unique_id())
 # sw_type can be : "sw" for momentary switch or "tog" for toggle switch
 # ############################################################
-
 SmartRelay = MultiRelaySwitcher(server=con_data["server"], client_id=client_id, listen_topics=con_data["listen_topics"],
                                 msg_topic=con_data["out_topic"], static_ip=con_data["static_ip"], user=con_data["user"],
                                 device_topic=con_data["client_topic"], password=con_data["password"], rev=rev,
                                 state_topic=con_data["state_topic"], avail_topic=con_data["avail_topic"],
-                                sw_amount=con_data["sw_amount"], sw_type=con_data["sw_type"])
+                                sw_amount=con_data["sw_amount"], sw_type=con_data["sw_type"],
+                                port_type=con_data["port_type"])

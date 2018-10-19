@@ -1,7 +1,9 @@
 {
-  "listen_topics": ["HomePi/Dvir/All"],
-  "sw_amount":2,
-  "sw_type":"tog",
+  "listen_topics": [
+    "HomePi/Dvir/All"
+  ],
+  "sw_amount": 2,
+  "sw_type": "tog",
   "server": "192.168.2.200",
   "out_topic": "HomePi/Dvir/Messages",
   "client_topic": "HomePi/Dvir/Windows/LaundryRoom",
@@ -9,5 +11,6 @@
   "user": "guy",
   "password": "kupelu9e",
   "state_topic": "HomePi/Dvir/Windows/LaundryRoom/State",
-  "avail_topic": "HomePi/Dvir/Windows/LaundryRoom/Avail"
+  "avail_topic": "HomePi/Dvir/Windows/LaundryRoom/Avail",
+  "port_type": "esp8266"
 }
