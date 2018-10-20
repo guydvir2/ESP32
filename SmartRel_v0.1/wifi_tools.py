@@ -182,17 +182,6 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
                         # exiting emergency
             utime.sleep(self.switching_delay)
 
-    def check_switch_change(self):
-        # current_get_buttons_state = self.get_buttons_state()
-        if self.last_buttons_state != self.get_buttons_state():
-            # debounce
-            utime.sleep(self.switching_delay)
-            # check again
-            if self.last_buttons_state != self.get_buttons_state():
-                self.switch_by_button()
-                self.last_buttons_state = self.get_buttons_state()
-
-    # @staticmethod
     def time_stamp(self, time_tup=None):
         if time_tup is None:
             t_tup = utime.localtime()
@@ -203,7 +192,8 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         return t
 
     def notify_error(self, msg):
-        self.append_log(msg)
+        pass
+        # self.append_log(msg)
 
     def ping_broker(self, keep_time):
         # for keepalive purposes

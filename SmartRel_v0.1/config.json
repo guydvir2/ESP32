@@ -3,7 +3,7 @@
     "HomePi/Dvir/All"
   ],
   "sw_amount": 2,
-  "sw_type": "tog",
+  "sw_type": "sw",
   "server": "192.168.2.200",
   "out_topic": "HomePi/Dvir/Messages",
   "client_topic": "HomePi/Dvir/Windows/LaundryRoom",
