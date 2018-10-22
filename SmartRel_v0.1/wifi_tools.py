@@ -15,7 +15,8 @@ class Connect2Wifi:
         return self.sta_if.isconnected()
 
     def connect(self, ip=None):
-        if not self.sta_if.isconnected():
+        while not self.sta_if.isconnected():
+        # if not self.sta_if.isconnected():
             print('connecting to network...')
             self.sta_if.connect("HomeNetwork_2.4G", "guyd5161")
 
@@ -39,19 +40,23 @@ class ClockUpdate:
 
     def update(self):
         try:
-            ntptime.settime()
-            rtc = machine.RTC()
+            if self.is_connected() == 1:
+                ntptime.settime()
+                rtc = machine.RTC()
 
-            # daylight saving
-            if 10 >= utime.localtime()[1] >= 4:
-                daylight = 1
+                # daylight saving
+                if 10 >= utime.localtime()[1] >= 4:
+                    daylight = 1
+                else:
+                    daylight = 0
+
+                tm = utime.localtime(utime.mktime(utime.localtime()) + (self.utc_shift + daylight) * 3600)
+                tm = tm[0:3] + (0,) + tm[3:6] + (0,)
+                rtc.datetime(tm)
+                print("clock update successful", utime.localtime())
             else:
-                daylight = 0
+                print("fail to obtain internet connection to update clock")
 
-            tm = utime.localtime(utime.mktime(utime.localtime()) + (self.utc_shift + daylight) * 3600)
-            tm = tm[0:3] + (0,) + tm[3:6] + (0,)
-            rtc.datetime(tm)
-            print("clock update successful", utime.localtime())
         except OSError:
             self.notify_error("fail getting NTP server")
 
@@ -77,7 +82,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         self.mqtt_client, self.arrived_msg = None, None
         self.avail_topic = avail_topic
         self.state_topic = state_topic
-        self.last_buttons_state, self.last_ping_time = [], None
+        self.last_ping_time = None
 
         # self.boot_time = utime.localtime()
 
@@ -134,7 +139,7 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
 
     def mqtt_wait_loop(self):
         fails_counter, off_timer, tot_disconnections = 0, 0, 0
-        self.last_buttons_state = self.get_buttons_state()
+        # self.last_buttons_state = self.get_buttons_state()
 
         while True:
             # detect button press
@@ -192,8 +197,8 @@ class MQTTCommander(Connect2Wifi, ClockUpdate):
         return t
 
     def notify_error(self, msg):
-        pass
-        # self.append_log(msg)
+        # pass
+        self.append_log(msg)
 
     def ping_broker(self, keep_time):
         # for keepalive purposes

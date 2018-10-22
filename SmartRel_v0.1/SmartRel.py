@@ -2,11 +2,11 @@ from wifi_tools import MQTTCommander
 from utime import sleep, localtime
 from machine import Pin, Signal, unique_id
 import jReader
-# from errlog import ErrorLog
+from errlog import ErrorLog
 from ubinascii import hexlify
 
 
-class MultiRelaySwitcher(MQTTCommander):  # , ErrorLog):
+class MultiRelaySwitcher(MQTTCommander, ErrorLog):
     def __init__(self, server=None, client_id=None, listen_topics=None, msg_topic=None, sw_amount=None, sw_type=None,
                  device_topic=None, static_ip=None, user=None, password=None, rev=None, state_topic=None,
                  avail_topic=None, port_type=None):
@@ -38,10 +38,11 @@ class MultiRelaySwitcher(MQTTCommander):  # , ErrorLog):
         self.PBit()
         self.last_buttons_state = self.get_buttons_state()
 
-        # ErrorLog.__init__(self, log_filename='error.log')
-        print("System parameters: port type: %s, "
-              "switch type: %s, switches amount: %d, MQTT: broker:%s, listen: %s device:%s" % (
-                  port_type, sw_type, sw_amount, server, str(listen_topics), str(device_topic)))
+        ErrorLog.__init__(self, log_filename='error.log')
+        print(
+            "System parameters: \n ##################\nport type: %s\nswitch type: %s\nswitches amount: %d\nMQTT: "
+            "broker:%s\nlisten: %s\ndevice:%s" % (
+                port_type, sw_type, sw_amount, server, str(listen_topics), str(device_topic)))
 
         MQTTCommander.__init__(self, server=server, client_id=client_id, device_topic=device_topic,
                                msg_topic=msg_topic, state_topic=state_topic_temp, avail_topic=avail_topic,
